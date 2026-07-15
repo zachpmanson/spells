@@ -5,6 +5,9 @@ import { listCards } from '../../server/listCards'
 
 export const Route = createFileRoute('/admin/cards')({
   loader: () => listCards(),
+  head: () => ({
+    meta: [{ title: 'All cards - Spells' }],
+  }),
   component: AdminCardsRoute,
 })
 

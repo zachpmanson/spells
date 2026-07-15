@@ -4,6 +4,9 @@ import { Gallery } from '../components/Gallery'
 import { useCardStore } from '../lib/cardStore'
 
 export const Route = createFileRoute('/')({
+  head: () => ({
+    meta: [{ title: 'Library - Spells' }],
+  }),
   component: LibraryRoute,
 })
 
