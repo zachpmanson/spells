@@ -23,6 +23,10 @@ function App({ autoGenerateImage }: AppProps) {
     document.execCommand('defaultParagraphSeparator', false, 'br')
   }, [])
 
+  useEffect(() => {
+    document.title = card.title ? `${card.title} - Spells` : 'Spells'
+  }, [card.title])
+
   return (
     <div className="app-layout">
       <Toolbar canvasRef={canvasRef} onOpenModelSettings={() => setShowModelSettings(true)} />

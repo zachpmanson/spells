@@ -10,6 +10,9 @@ import type { Card } from '../../types/card'
 
 export const Route = createFileRoute('/card/$id')({
   loader: ({ params }) => getCard({ data: { id: params.id } }),
+  head: ({ loaderData }) => ({
+    meta: [{ title: loaderData?.title ? `${loaderData.title} - Spells` : 'Spells' }],
+  }),
   component: CardViewRoute,
 })
 

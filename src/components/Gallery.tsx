@@ -48,8 +48,17 @@ export function Gallery() {
                       {savedIds.has(card.id) ? 'Saved' : 'Local only'}
                     </span>
                   )}
-                  <Button size="sm" onClick={() => deleteFromLibrary(card.id)}>
-                    Delete
+                  <Button
+                    size="sm"
+                    aria-label={`Delete ${card.title || 'Untitled'}`}
+                    title="Delete"
+                    onClick={() => {
+                      if (window.confirm(`Delete "${card.title || 'Untitled'}"? This can't be undone.`)) {
+                        deleteFromLibrary(card.id)
+                      }
+                    }}
+                  >
+                    🗑️
                   </Button>
                 </div>
               </li>
