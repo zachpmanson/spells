@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  preview: {
+    allowedHosts: ['spells.zachmanson.com'],
+  },
   resolve: {
     tsconfigPaths: true,
   },
