@@ -17,4 +17,4 @@ deploy:
 		echo "error: $$branch is ahead of origin/$$branch. Push before deploying."; \
 		exit 1; \
 	fi
-	ssh spells 'cd ~/nixos-config && nix flake lock --update-input spells && sudo nixos-rebuild switch --flake .#naboo'
+	ssh spells 'cd ~/nixos-config && nix flake lock --update-input spells && rebuild'
