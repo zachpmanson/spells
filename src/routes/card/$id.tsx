@@ -9,7 +9,7 @@ import { exportCardAsJson } from '../../lib/persistence'
 import type { Card } from '../../types/card'
 
 export const Route = createFileRoute('/card/$id')({
-  loader: ({ params }) => getCard({ data: { id: params.id } }),
+  loader: ({ params }) => getCard({ data: { publicId: params.id } }),
   head: ({ loaderData }) => ({
     meta: [{ title: loaderData?.title ? `${loaderData.title} - Spells` : 'Spells' }],
   }),
@@ -32,12 +32,13 @@ function CardViewRoute() {
     setHydrated(true)
   }, [hydrateFromStorage])
 
-  const isOwnCard = hydrated && library.some((c) => c.id === id)
+  const ownedCard = hydrated ? library.find((c) => c.publicId === id) : undefined
 
   function handleFork() {
     if (!card) return
     const forked: Card = {
       id: crypto.randomUUID(),
+      publicId: null,
       templateId: card.templateId,
       title: card.title,
       manaCost: card.manaCost,
@@ -61,8 +62,8 @@ function CardViewRoute() {
           <>
             <span className="card-view-title">{card.title || 'Untitled'}</span>
             <div className="card-view-actions toolbar-spacer-btn">
-              {isOwnCard && (
-                <Button to="/edit/$id" params={{ id }}>
+              {ownedCard && (
+                <Button to="/edit/$id" params={{ id: ownedCard.id }}>
                   Edit
                 </Button>
               )}

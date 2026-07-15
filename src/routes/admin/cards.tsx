@@ -26,10 +26,10 @@ function AdminCardsRoute() {
         ) : (
           <ul className="library-grid">
             {cards.map((card) => (
-              <li key={card.id} className="library-grid-item">
+              <li key={card.publicId} className="library-grid-item">
                 <Link
                   to="/card/$id"
-                  params={{ id: card.id }}
+                  params={{ id: card.publicId }}
                   className="library-grid-item-preview"
                   title={`View ${card.title || 'Untitled'}`}
                 >

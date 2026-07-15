@@ -42,10 +42,14 @@ export function Gallery() {
                   <span>{card.title || 'Untitled'}</span>
                   {savedIds && (
                     <span
-                      className={savedIds.has(card.id) ? 'card-sync-badge card-sync-badge-saved' : 'card-sync-badge card-sync-badge-local'}
-                      title={savedIds.has(card.id) ? 'Saved to server' : 'Local only — not yet saved to server'}
+                      className={
+                        card.publicId && savedIds.has(card.publicId)
+                          ? 'card-sync-badge card-sync-badge-saved'
+                          : 'card-sync-badge card-sync-badge-local'
+                      }
+                      title={card.publicId && savedIds.has(card.publicId) ? 'Saved to server' : 'Local only — not yet saved to server'}
                     >
-                      {savedIds.has(card.id) ? 'Saved' : 'Local only'}
+                      {card.publicId && savedIds.has(card.publicId) ? 'Saved' : 'Local only'}
                     </span>
                   )}
                   <Button

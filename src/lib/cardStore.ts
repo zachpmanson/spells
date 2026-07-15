@@ -136,17 +136,19 @@ export const useCardStore = create<CardStoreState>((set, get) => ({
 
   saveToLibrary: () => {
     const { card, library } = get()
-    const existingIndex = library.findIndex((c) => c.id === card.id)
+    const cardToSave: Card = card.publicId ? card : { ...card, publicId: crypto.randomUUID() }
+    const existingIndex = library.findIndex((c) => c.id === cardToSave.id)
     const nextLibrary =
       existingIndex >= 0
-        ? library.map((c, i) => (i === existingIndex ? card : c))
-        : [...library, card]
+        ? library.map((c, i) => (i === existingIndex ? cardToSave : c))
+        : [...library, cardToSave]
     if (!saveLibrary(nextLibrary)) {
       window.alert('Could not save to your library: browser storage is full. Try deleting some saved cards first.')
       return false
     }
-    set({ library: nextLibrary })
-    saveCard({ data: card }).catch((err) => console.error('Failed to record card server-side:', err))
+    persist(cardToSave)
+    set({ card: cardToSave, library: nextLibrary })
+    saveCard({ data: cardToSave }).catch((err) => console.error('Failed to record card server-side:', err))
     return true
   },
 
