@@ -4,6 +4,9 @@ import App from '../../App'
 import { useCardStore } from '../../lib/cardStore'
 
 export const Route = createFileRoute('/edit/$id')({
+  head: () => ({
+    meta: [{ title: 'Edit - Spells' }],
+  }),
   component: EditByIdRoute,
 })
 

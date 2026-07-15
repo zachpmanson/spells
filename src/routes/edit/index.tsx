@@ -33,6 +33,9 @@ export const Route = createFileRoute('/edit/')({
     imageUrl: asString(search.imageUrl),
     generateImage: asBoolean(search.generateImage),
   }),
+  head: () => ({
+    meta: [{ title: 'Edit - Spells' }],
+  }),
   component: EditRoute,
 })
 
