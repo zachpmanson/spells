@@ -20,7 +20,7 @@ export function Gallery() {
   return (
     <div className="library-page">
       <div className="library-header">
-        <h1>My cards</h1>
+        <h1>Library</h1>
         <Button onClick={() => navigate({ to: '/edit' })}>New card</Button>
       </div>
       <div className="library-content">
