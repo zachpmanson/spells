@@ -22,9 +22,14 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
   const canRedo = useCardStore((s) => s.future.length > 0)
   const [justSaved, setJustSaved] = useState(false)
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const [justCopied, setJustCopied] = useState(false)
+  const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
-    return () => clearTimeout(savedTimeoutRef.current)
+    return () => {
+      clearTimeout(savedTimeoutRef.current)
+      clearTimeout(copiedTimeoutRef.current)
+    }
   }, [])
 
   function handleSaveToLibrary() {
@@ -34,6 +39,15 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
       clearTimeout(savedTimeoutRef.current)
       savedTimeoutRef.current = setTimeout(() => setJustSaved(false), 2000)
     }
+  }
+
+  async function handleCopyShareLink() {
+    const publicId = card.publicId ?? (saveToLibrary() ? useCardStore.getState().card.publicId : null)
+    if (!publicId) return
+    await navigator.clipboard.writeText(`${window.location.origin}/card/${publicId}`)
+    setJustCopied(true)
+    clearTimeout(copiedTimeoutRef.current)
+    copiedTimeoutRef.current = setTimeout(() => setJustCopied(false), 2000)
   }
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -55,6 +69,7 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
         Redo
       </Button>
       <Button onClick={handleSaveToLibrary}>{justSaved ? 'Saved ✓' : 'Save to library'}</Button>
+      <Button onClick={handleCopyShareLink}>{justCopied ? 'Copied ✓' : 'Copy share link'}</Button>
       <Button onClick={() => exportCardAsJson(card)}>Export JSON</Button>
       <label className="btn import-label">
         Import JSON

@@ -26,26 +26,13 @@ function CardViewRoute() {
   const library = useCardStore((s) => s.library)
   const previewRef = useRef<HTMLDivElement>(null)
   const [hydrated, setHydrated] = useState(false)
-  const [justCopied, setJustCopied] = useState(false)
-  const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     hydrateFromStorage()
     setHydrated(true)
   }, [hydrateFromStorage])
 
-  useEffect(() => {
-    return () => clearTimeout(copiedTimeoutRef.current)
-  }, [])
-
   const ownedCard = hydrated ? library.find((c) => c.publicId === id) : undefined
-
-  async function handleCopyShareLink() {
-    await navigator.clipboard.writeText(`${window.location.origin}/card/${id}`)
-    setJustCopied(true)
-    clearTimeout(copiedTimeoutRef.current)
-    copiedTimeoutRef.current = setTimeout(() => setJustCopied(false), 2000)
-  }
 
   function handleFork() {
     if (!card) return
@@ -81,7 +68,6 @@ function CardViewRoute() {
                 </Button>
               )}
               <Button onClick={handleFork}>Fork</Button>
-              <Button onClick={handleCopyShareLink}>{justCopied ? 'Copied ✓' : 'Copy share link'}</Button>
               <Button onClick={() => exportCardAsJson(card)}>Export JSON</Button>
               <Button
                 onClick={() => previewRef.current && exportCardCanvasAsPng(previewRef.current, card.title)}
