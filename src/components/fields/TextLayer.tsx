@@ -6,10 +6,11 @@ interface TextLayerProps {
   box: BoxCoords
   value: string
   placeholder: string
-  onChange: (value: string) => void
+  onChange?: (value: string) => void
   multiline?: boolean
   autoShrink?: boolean
   className?: string
+  readOnly?: boolean
 }
 
 export function TextLayer({
@@ -20,6 +21,7 @@ export function TextLayer({
   multiline = false,
   autoShrink = false,
   className,
+  readOnly = false,
 }: TextLayerProps) {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -47,25 +49,31 @@ export function TextLayer({
     >
       <div
         ref={ref}
-        contentEditable
+        contentEditable={!readOnly}
         suppressContentEditableWarning
         data-placeholder={placeholder}
-        onBlur={(e) => onChange(sanitizeInlineHtml(e.currentTarget.innerHTML))}
-        onKeyDown={(e) => {
-          if (!multiline && e.key === 'Enter') {
-            e.preventDefault()
-            return
-          }
-          const withModifier = e.metaKey || e.ctrlKey
-          if (!withModifier) return
-          if (e.key === 'b' || e.key === 'B') {
-            e.preventDefault()
-            document.execCommand('bold')
-          } else if (e.key === 'i' || e.key === 'I') {
-            e.preventDefault()
-            document.execCommand('italic')
-          }
-        }}
+        onBlur={
+          readOnly ? undefined : (e) => onChange?.(sanitizeInlineHtml(e.currentTarget.innerHTML))
+        }
+        onKeyDown={
+          readOnly
+            ? undefined
+            : (e) => {
+                if (!multiline && e.key === 'Enter') {
+                  e.preventDefault()
+                  return
+                }
+                const withModifier = e.metaKey || e.ctrlKey
+                if (!withModifier) return
+                if (e.key === 'b' || e.key === 'B') {
+                  e.preventDefault()
+                  document.execCommand('bold')
+                } else if (e.key === 'i' || e.key === 'I') {
+                  e.preventDefault()
+                  document.execCommand('italic')
+                }
+              }
+        }
         className="text-layer-content"
         dangerouslySetInnerHTML={{ __html: value }}
       />

@@ -31,11 +31,11 @@ pkgs.stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p $out/lib/spells
-    cp -r dist node_modules package.json vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json $out/lib/spells/
+    cp -r dist node_modules src public package.json vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json $out/lib/spells/
 
     mkdir -p $out/bin
     makeWrapper ${pkgs.nodejs_24}/bin/node $out/bin/spells \
-      --add-flags "$out/lib/spells/node_modules/vite/bin/vite.js preview" \
+      --add-flags "$out/lib/spells/node_modules/vite/bin/vite.js preview --configLoader runner" \
       --chdir "$out/lib/spells"
     runHook postInstall
   '';

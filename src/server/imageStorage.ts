@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { getDataDir } from './dataDir'
 
-const STORAGE_DIR = path.resolve(process.cwd(), 'data', 'images')
+const STORAGE_DIR = path.join(getDataDir(), 'images')
 
 const CONTENT_TYPE_TO_EXT: Record<string, string> = {
   'image/png': 'png',

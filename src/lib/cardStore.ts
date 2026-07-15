@@ -3,6 +3,7 @@ import type { Card, CoverImage } from '../types/card'
 import { createBlankCard } from '../types/card'
 import { DEFAULT_TEMPLATE } from '../templates/templates'
 import { loadCurrentCard, loadLibrary, saveCurrentCard, saveLibrary } from './persistence'
+import { saveCard } from '../server/saveCard'
 
 const HISTORY_LIMIT = 50
 
@@ -21,7 +22,7 @@ interface CardStoreState {
   newCardWithOverrides: (overrides: Partial<Card>) => void
   loadCard: (card: Card) => void
   loadCardById: (id: string) => boolean
-  saveToLibrary: () => void
+  saveToLibrary: () => boolean
   deleteFromLibrary: (id: string) => void
   importCards: (cards: Card[]) => void
   hydrateFromStorage: () => void
@@ -142,9 +143,11 @@ export const useCardStore = create<CardStoreState>((set, get) => ({
         : [...library, card]
     if (!saveLibrary(nextLibrary)) {
       window.alert('Could not save to your library: browser storage is full. Try deleting some saved cards first.')
-      return
+      return false
     }
     set({ library: nextLibrary })
+    saveCard({ data: card }).catch((err) => console.error('Failed to record card server-side:', err))
+    return true
   },
 
   deleteFromLibrary: (id) => {

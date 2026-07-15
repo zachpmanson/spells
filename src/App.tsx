@@ -25,16 +25,7 @@ function App({ autoGenerateImage }: AppProps) {
 
   return (
     <div className="app-layout">
-      <Toolbar canvasRef={canvasRef} />
-      <button
-        type="button"
-        className="btn-overlay btn-icon app-settings-btn"
-        onClick={() => setShowModelSettings(true)}
-        title="Model settings"
-        aria-label="Model settings"
-      >
-        ⚙
-      </button>
+      <Toolbar canvasRef={canvasRef} onOpenModelSettings={() => setShowModelSettings(true)} />
       <div className="app-body">
         <aside className="app-sidebar">
           <TemplatePicker templateId={card.templateId} />

@@ -11,9 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+.direnv
 
-# Server-stored uploaded/generated images
-/data/images
+# Server-stored uploaded/generated images and the local cards database
+/data
+.tanstack/
 
 # Secrets
 .env

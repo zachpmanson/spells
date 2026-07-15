@@ -1,10 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
-import App from '../App'
-import { useCardStore } from '../lib/cardStore'
+import App from '../../App'
+import { useCardStore } from '../../lib/cardStore'
 
 interface EditSearch {
-  id?: string
   title?: string
   manaCost?: string
   typeLine?: string
@@ -23,9 +22,8 @@ function asBoolean(value: unknown): boolean | undefined {
   return value === true || value === 'true' || value === '1' ? true : undefined
 }
 
-export const Route = createFileRoute('/edit')({
+export const Route = createFileRoute('/edit/')({
   validateSearch: (search: Record<string, unknown>): EditSearch => ({
-    id: asString(search.id),
     title: asString(search.title),
     manaCost: asString(search.manaCost),
     typeLine: asString(search.typeLine),
@@ -41,7 +39,6 @@ export const Route = createFileRoute('/edit')({
 function EditRoute() {
   const search = Route.useSearch()
   const hydrateFromStorage = useCardStore((s) => s.hydrateFromStorage)
-  const loadCardById = useCardStore((s) => s.loadCardById)
   const newCardWithOverrides = useCardStore((s) => s.newCardWithOverrides)
   const initialized = useRef(false)
 
@@ -50,10 +47,6 @@ function EditRoute() {
     initialized.current = true
 
     hydrateFromStorage()
-
-    if (search.id) {
-      if (loadCardById(search.id)) return
-    }
 
     const hasFieldOverrides =
       search.title !== undefined ||

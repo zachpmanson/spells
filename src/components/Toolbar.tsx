@@ -1,13 +1,16 @@
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useCardStore } from '../lib/cardStore'
 import { exportCardAsJson, importCardsFromFile } from '../lib/persistence'
 import { exportCardCanvasAsPng } from '../lib/export'
+import { Button } from './Button'
 
 interface ToolbarProps {
   canvasRef: React.RefObject<HTMLDivElement | null>
+  onOpenModelSettings: () => void
 }
 
-export function Toolbar({ canvasRef }: ToolbarProps) {
+export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
   const navigate = useNavigate()
   const card = useCardStore((s) => s.card)
   const undo = useCardStore((s) => s.undo)
@@ -17,6 +20,21 @@ export function Toolbar({ canvasRef }: ToolbarProps) {
   const importCards = useCardStore((s) => s.importCards)
   const canUndo = useCardStore((s) => s.past.length > 0)
   const canRedo = useCardStore((s) => s.future.length > 0)
+  const [justSaved, setJustSaved] = useState(false)
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    return () => clearTimeout(savedTimeoutRef.current)
+  }, [])
+
+  function handleSaveToLibrary() {
+    const saved = saveToLibrary()
+    if (saved) {
+      setJustSaved(true)
+      clearTimeout(savedTimeoutRef.current)
+      savedTimeoutRef.current = setTimeout(() => setJustSaved(false), 2000)
+    }
+  }
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -28,35 +46,26 @@ export function Toolbar({ canvasRef }: ToolbarProps) {
 
   return (
     <div className="toolbar">
-      <button type="button" className="btn" onClick={() => navigate({ to: '/' })}>
-        Library
-      </button>
-      <button type="button" className="btn" onClick={newCard}>
-        New card
-      </button>
-      <button type="button" className="btn" onClick={undo} disabled={!canUndo}>
+      <Button onClick={() => navigate({ to: '/' })}>Library</Button>
+      <Button onClick={onOpenModelSettings}>Settings</Button>
+      <Button onClick={undo} disabled={!canUndo}>
         Undo
-      </button>
-      <button type="button" className="btn" onClick={redo} disabled={!canRedo}>
+      </Button>
+      <Button onClick={redo} disabled={!canRedo}>
         Redo
-      </button>
-      <button type="button" className="btn" onClick={saveToLibrary}>
-        Save to library
-      </button>
-      <button type="button" className="btn" onClick={() => exportCardAsJson(card)}>
-        Export JSON
-      </button>
+      </Button>
+      <Button onClick={handleSaveToLibrary}>{justSaved ? 'Saved ✓' : 'Save to library'}</Button>
+      <Button onClick={() => exportCardAsJson(card)}>Export JSON</Button>
       <label className="btn import-label">
         Import JSON
         <input type="file" accept="application/json" onChange={handleImport} />
       </label>
-      <button
-        type="button"
-        className="btn"
-        onClick={() => canvasRef.current && exportCardCanvasAsPng(canvasRef.current, card.title)}
-      >
+      <Button onClick={() => canvasRef.current && exportCardCanvasAsPng(canvasRef.current, card.title)}>
         Export PNG
-      </button>
+      </Button>
+      <Button className="toolbar-spacer-btn" onClick={newCard}>
+        New card
+      </Button>
     </div>
   )
 }

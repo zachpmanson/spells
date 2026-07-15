@@ -9,11 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as EditRouteImport } from './routes/edit'
+import { Route as EditRouteRouteImport } from './routes/edit/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EditIndexRouteImport } from './routes/edit/index'
+import { Route as EditIdRouteImport } from './routes/edit/$id'
+import { Route as CardIdRouteImport } from './routes/card/$id'
+import { Route as AdminCardsRouteImport } from './routes/admin/cards'
 import { Route as ApiImagesIdRouteImport } from './routes/api/images/$id'
 
-const EditRoute = EditRouteImport.update({
+const EditRouteRoute = EditRouteRouteImport.update({
   id: '/edit',
   path: '/edit',
   getParentRoute: () => rootRouteImport,
@@ -21,6 +25,26 @@ const EditRoute = EditRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditIndexRoute = EditIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => EditRouteRoute,
+} as any)
+const EditIdRoute = EditIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => EditRouteRoute,
+} as any)
+const CardIdRoute = CardIdRouteImport.update({
+  id: '/card/$id',
+  path: '/card/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCardsRoute = AdminCardsRouteImport.update({
+  id: '/admin/cards',
+  path: '/admin/cards',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiImagesIdRoute = ApiImagesIdRouteImport.update({
@@ -31,31 +55,65 @@ const ApiImagesIdRoute = ApiImagesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/edit': typeof EditRoute
+  '/edit': typeof EditRouteRouteWithChildren
+  '/admin/cards': typeof AdminCardsRoute
+  '/card/$id': typeof CardIdRoute
+  '/edit/$id': typeof EditIdRoute
+  '/edit/': typeof EditIndexRoute
   '/api/images/$id': typeof ApiImagesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/edit': typeof EditRoute
+  '/admin/cards': typeof AdminCardsRoute
+  '/card/$id': typeof CardIdRoute
+  '/edit/$id': typeof EditIdRoute
+  '/edit': typeof EditIndexRoute
   '/api/images/$id': typeof ApiImagesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/edit': typeof EditRoute
+  '/edit': typeof EditRouteRouteWithChildren
+  '/admin/cards': typeof AdminCardsRoute
+  '/card/$id': typeof CardIdRoute
+  '/edit/$id': typeof EditIdRoute
+  '/edit/': typeof EditIndexRoute
   '/api/images/$id': typeof ApiImagesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/edit' | '/api/images/$id'
+  fullPaths:
+    | '/'
+    | '/edit'
+    | '/admin/cards'
+    | '/card/$id'
+    | '/edit/$id'
+    | '/edit/'
+    | '/api/images/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/edit' | '/api/images/$id'
-  id: '__root__' | '/' | '/edit' | '/api/images/$id'
+  to:
+    | '/'
+    | '/admin/cards'
+    | '/card/$id'
+    | '/edit/$id'
+    | '/edit'
+    | '/api/images/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/edit'
+    | '/admin/cards'
+    | '/card/$id'
+    | '/edit/$id'
+    | '/edit/'
+    | '/api/images/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  EditRoute: typeof EditRoute
+  EditRouteRoute: typeof EditRouteRouteWithChildren
+  AdminCardsRoute: typeof AdminCardsRoute
+  CardIdRoute: typeof CardIdRoute
   ApiImagesIdRoute: typeof ApiImagesIdRoute
 }
 
@@ -65,7 +123,7 @@ declare module '@tanstack/react-router' {
       id: '/edit'
       path: '/edit'
       fullPath: '/edit'
-      preLoaderRoute: typeof EditRouteImport
+      preLoaderRoute: typeof EditRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -73,6 +131,34 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/edit/': {
+      id: '/edit/'
+      path: '/'
+      fullPath: '/edit/'
+      preLoaderRoute: typeof EditIndexRouteImport
+      parentRoute: typeof EditRouteRoute
+    }
+    '/edit/$id': {
+      id: '/edit/$id'
+      path: '/$id'
+      fullPath: '/edit/$id'
+      preLoaderRoute: typeof EditIdRouteImport
+      parentRoute: typeof EditRouteRoute
+    }
+    '/card/$id': {
+      id: '/card/$id'
+      path: '/card/$id'
+      fullPath: '/card/$id'
+      preLoaderRoute: typeof CardIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/cards': {
+      id: '/admin/cards'
+      path: '/admin/cards'
+      fullPath: '/admin/cards'
+      preLoaderRoute: typeof AdminCardsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/images/$id': {
@@ -85,9 +171,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface EditRouteRouteChildren {
+  EditIdRoute: typeof EditIdRoute
+  EditIndexRoute: typeof EditIndexRoute
+}
+
+const EditRouteRouteChildren: EditRouteRouteChildren = {
+  EditIdRoute: EditIdRoute,
+  EditIndexRoute: EditIndexRoute,
+}
+
+const EditRouteRouteWithChildren = EditRouteRoute._addFileChildren(
+  EditRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  EditRoute: EditRoute,
+  EditRouteRoute: EditRouteRouteWithChildren,
+  AdminCardsRoute: AdminCardsRoute,
+  CardIdRoute: CardIdRoute,
   ApiImagesIdRoute: ApiImagesIdRoute,
 }
 export const routeTree = rootRouteImport

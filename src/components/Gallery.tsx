@@ -1,38 +1,56 @@
 import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 import { useCardStore } from '../lib/cardStore'
+import { getSavedCardIds } from '../server/listSavedCardIds'
+import { CardPreview } from './CardPreview'
+import { Button } from './Button'
 
 export function Gallery() {
   const navigate = useNavigate()
   const library = useCardStore((s) => s.library)
   const deleteFromLibrary = useCardStore((s) => s.deleteFromLibrary)
+  const [savedIds, setSavedIds] = useState<Set<string> | null>(null)
+
+  useEffect(() => {
+    getSavedCardIds()
+      .then((ids) => setSavedIds(new Set(ids)))
+      .catch((err) => console.error('Failed to check which cards are saved:', err))
+  }, [])
 
   return (
     <div className="library-page">
       <div className="library-header">
         <h1>My cards</h1>
-        <button type="button" className="btn" onClick={() => navigate({ to: '/edit' })}>
-          New card
-        </button>
+        <Button onClick={() => navigate({ to: '/edit' })}>New card</Button>
       </div>
       <div className="library-content">
         {library.length === 0 ? (
           <p>No saved cards yet.</p>
         ) : (
-          <ul className="gallery-list">
+          <ul className="library-grid">
             {library.map((card) => (
-              <li key={card.id}>
-                <span>{card.title || 'Untitled'}</span>
-                <div>
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={() => navigate({ to: '/edit', search: { id: card.id } })}
-                  >
-                    Open
-                  </button>
-                  <button type="button" className="btn btn-sm" onClick={() => deleteFromLibrary(card.id)}>
+              <li key={card.id} className="library-grid-item">
+                <button
+                  type="button"
+                  className="library-grid-item-preview"
+                  onClick={() => navigate({ to: '/edit/$id', params: { id: card.id } })}
+                  title={`Open ${card.title || 'Untitled'}`}
+                >
+                  <CardPreview card={card} />
+                </button>
+                <div className="library-grid-item-footer">
+                  <span>{card.title || 'Untitled'}</span>
+                  {savedIds && (
+                    <span
+                      className={savedIds.has(card.id) ? 'card-sync-badge card-sync-badge-saved' : 'card-sync-badge card-sync-badge-local'}
+                      title={savedIds.has(card.id) ? 'Saved to server' : 'Local only — not yet saved to server'}
+                    >
+                      {savedIds.has(card.id) ? 'Saved' : 'Local only'}
+                    </span>
+                  )}
+                  <Button size="sm" onClick={() => deleteFromLibrary(card.id)}>
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </li>
             ))}

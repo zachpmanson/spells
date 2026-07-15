@@ -8,10 +8,14 @@ import { useCardStore } from '../lib/cardStore'
 interface CardCanvasProps {
   card: Card
   autoGenerateImage?: boolean
+  imageModel?: string
+  textModel?: string
+  style?: string
+  readOnly?: boolean
 }
 
 export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function CardCanvas(
-  { card, autoGenerateImage },
+  { card, autoGenerateImage, imageModel, textModel, style, readOnly = false },
   ref,
 ) {
   const updateField = useCardStore((s) => s.updateField)
@@ -47,6 +51,10 @@ export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function C
         coverImage={card.coverImage}
         onChange={setCoverImage}
         autoGenerate={autoGenerateImage}
+        imageModel={imageModel}
+        textModel={textModel}
+        style={style}
+        readOnly={readOnly}
         genPrompt={{
           title: card.title,
           typeLine: card.typeLine,
@@ -74,6 +82,7 @@ export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function C
         placeholder="Card title"
         onChange={(v) => updateField('title', v)}
         className="field-title"
+        readOnly={readOnly}
       />
       <TextLayer
         box={template.fields.manaCost}
@@ -81,6 +90,7 @@ export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function C
         placeholder="{2}{U}"
         onChange={(v) => updateField('manaCost', v)}
         className="field-mana-cost"
+        readOnly={readOnly}
       />
       <TextLayer
         box={template.fields.typeLine}
@@ -88,6 +98,7 @@ export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function C
         placeholder="Creature — Wizard"
         onChange={(v) => updateField('typeLine', v)}
         className="field-type-line"
+        readOnly={readOnly}
       />
       <TextLayer
         box={rulesTextBox}
@@ -97,6 +108,7 @@ export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function C
         multiline
         autoShrink
         className="field-rules-text"
+        readOnly={readOnly}
       />
       {showFlavorText && template.fields.flavorText && (
         <TextLayer
@@ -107,6 +119,7 @@ export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function C
           multiline
           autoShrink
           className="field-flavor-text"
+          readOnly={readOnly}
         />
       )}
       {template.fields.powerToughness && (
@@ -116,6 +129,7 @@ export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function C
           placeholder="0/0"
           onChange={(v) => updateField('powerToughness', v)}
           className="field-power-toughness"
+          readOnly={readOnly}
         />
       )}
     </div>

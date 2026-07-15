@@ -57,6 +57,10 @@ in {
         ExecStart = "${cfg.package}/bin/spells --port ${toString cfg.port} --host ${cfg.hostname} --strictPort";
         EnvironmentFile = lib.mkIf (cfg.environmentFile != null) cfg.environmentFile;
         DynamicUser = true;
+        # Uploaded/generated card images and the cards.sqlite database are
+        # written under $STATE_DIRECTORY (systemd sets this to
+        # /var/lib/spells and makes it writable despite ProtectSystem=strict).
+        StateDirectory = "spells";
         PrivateTmp = true;
         ProtectSystem = "strict";
         NoNewPrivileges = true;
