@@ -51,7 +51,7 @@ export function TextLayer({
         ref={ref}
         contentEditable={!readOnly}
         suppressContentEditableWarning
-        data-placeholder={placeholder}
+        data-placeholder={readOnly ? undefined : placeholder}
         onBlur={
           readOnly ? undefined : (e) => onChange?.(sanitizeInlineHtml(e.currentTarget.innerHTML))
         }

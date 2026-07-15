@@ -1,6 +1,7 @@
 import { IMAGE_MODELS } from '../lib/imageModels'
 import { TEXT_MODELS } from '../lib/textModels'
 import { IMAGE_STYLES } from '../lib/imageStyles'
+import { Button } from './Button'
 
 interface ModelSettingsModalProps {
   onClose: () => void
@@ -26,9 +27,9 @@ export function ModelSettingsModal({
       <div className="model-settings-panel" onClick={(e) => e.stopPropagation()}>
         <div className="model-settings-header">
           <h3>Generation models</h3>
-          <button type="button" className="btn btn-sm" onClick={onClose}>
+          <Button size="sm" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
         <label className="model-settings-field">
           Image model

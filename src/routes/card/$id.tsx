@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { CardCanvas } from '../../components/CardCanvas'
+import { Button } from '../../components/Button'
 import { useCardStore } from '../../lib/cardStore'
 import { getCard } from '../../server/getCard'
 import { exportCardCanvasAsPng } from '../../lib/export'
@@ -52,35 +53,23 @@ function CardViewRoute() {
   return (
     <div className="card-view-page">
       <div className="toolbar">
-        <button type="button" className="btn" onClick={() => navigate({ to: '/' })}>
-          Library
-        </button>
+        <Button to="/">Library</Button>
         {card && (
           <>
             <span className="card-view-title">{card.title || 'Untitled'}</span>
             <div className="card-view-actions toolbar-spacer-btn">
               {isOwnCard && (
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => navigate({ to: '/edit/$id', params: { id } })}
-                >
+                <Button to="/edit/$id" params={{ id }}>
                   Edit
-                </button>
+                </Button>
               )}
-              <button type="button" className="btn" onClick={handleFork}>
-                Fork
-              </button>
-              <button type="button" className="btn" onClick={() => exportCardAsJson(card)}>
-                Export JSON
-              </button>
-              <button
-                type="button"
-                className="btn"
+              <Button onClick={handleFork}>Fork</Button>
+              <Button onClick={() => exportCardAsJson(card)}>Export JSON</Button>
+              <Button
                 onClick={() => previewRef.current && exportCardCanvasAsPng(previewRef.current, card.title)}
               >
                 Export PNG
-              </button>
+              </Button>
             </div>
           </>
         )}

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { CardPreview } from '../../components/CardPreview'
+import { Button } from '../../components/Button'
 import { listCards } from '../../server/listCards'
 
 export const Route = createFileRoute('/admin/cards')({
@@ -13,9 +14,7 @@ function AdminCardsRoute() {
   return (
     <div className="library-page">
       <div className="library-header">
-        <Link to="/" className="btn">
-          Library
-        </Link>
+        <Button to="/">Library</Button>
         <h1>All cards ({cards.length})</h1>
       </div>
       <div className="library-content">
