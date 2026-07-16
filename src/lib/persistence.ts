@@ -1,7 +1,9 @@
 import type { Card } from '../types/card'
+import type { Deck } from '../types/deck'
 
 const CURRENT_CARD_KEY = 'spells:currentCard'
 const LIBRARY_KEY = 'spells:library'
+const DECK_LIBRARY_KEY = 'spells:deckLibrary'
 
 function isBrowser(): boolean {
   return typeof window !== 'undefined'
@@ -59,6 +61,28 @@ export function saveLibrary(cards: Card[]): boolean {
   if (!isBrowser()) return true
   try {
     localStorage.setItem(LIBRARY_KEY, JSON.stringify(cards.map(sanitizeCardForStorage)))
+    return true
+  } catch (err) {
+    if (isQuotaExceededError(err)) return false
+    throw err
+  }
+}
+
+export function loadDeckLibrary(): Deck[] {
+  if (!isBrowser()) return []
+  const raw = localStorage.getItem(DECK_LIBRARY_KEY)
+  if (!raw) return []
+  try {
+    return JSON.parse(raw) as Deck[]
+  } catch {
+    return []
+  }
+}
+
+export function saveDeckLibrary(decks: Deck[]): boolean {
+  if (!isBrowser()) return true
+  try {
+    localStorage.setItem(DECK_LIBRARY_KEY, JSON.stringify(decks))
     return true
   } catch (err) {
     if (isQuotaExceededError(err)) return false

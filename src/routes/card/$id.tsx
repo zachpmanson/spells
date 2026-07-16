@@ -1,9 +1,11 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { CardCanvas } from '../../components/CardCanvas'
 import { Button } from '../../components/Button'
 import { useCardStore } from '../../lib/cardStore'
+import { useDeckStore } from '../../lib/deckStore'
 import { getCard } from '../../server/getCard'
+import { listDecksContainingCard } from '../../server/listDecksContainingCard'
 import { exportCardCanvasAsPng } from '../../lib/export'
 import { exportCardAsJson } from '../../lib/persistence'
 import type { Card } from '../../types/card'
@@ -24,15 +26,27 @@ function CardViewRoute() {
   const loadCard = useCardStore((s) => s.loadCard)
   const saveToLibrary = useCardStore((s) => s.saveToLibrary)
   const library = useCardStore((s) => s.library)
+  const deckLibrary = useDeckStore((s) => s.deckLibrary)
+  const hydrateDecksFromStorage = useDeckStore((s) => s.hydrateDecksFromStorage)
   const previewRef = useRef<HTMLDivElement>(null)
   const [hydrated, setHydrated] = useState(false)
+  const [memberDeckIds, setMemberDeckIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     hydrateFromStorage()
+    hydrateDecksFromStorage()
     setHydrated(true)
-  }, [hydrateFromStorage])
+  }, [hydrateFromStorage, hydrateDecksFromStorage])
+
+  useEffect(() => {
+    if (!hydrated || deckLibrary.length === 0) return
+    listDecksContainingCard({ data: { cardPublicId: id, deckPublicIds: deckLibrary.map((d) => d.publicId) } })
+      .then((ids) => setMemberDeckIds(new Set(ids)))
+      .catch((err) => console.error('Failed to check deck membership:', err))
+  }, [hydrated, deckLibrary, id])
 
   const ownedCard = hydrated ? library.find((c) => c.publicId === id) : undefined
+  const memberDecks = deckLibrary.filter((d) => memberDeckIds.has(d.publicId))
 
   function handleFork() {
     if (!card) return
@@ -87,6 +101,16 @@ function CardViewRoute() {
           <p>Card not found.</p>
         )}
       </div>
+      {memberDecks.length > 0 && (
+        <div className="card-view-decks">
+          <span>In your decks:</span>
+          {memberDecks.map((deck) => (
+            <Link key={deck.id} to="/deck/$id" params={{ id: deck.publicId }} className="card-sync-badge card-sync-badge-saved">
+              {deck.title || 'Untitled deck'}
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

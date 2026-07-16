@@ -10,16 +10,25 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as EditRouteRouteImport } from './routes/edit/route'
+import { Route as DeckRouteRouteImport } from './routes/deck/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EditIndexRouteImport } from './routes/edit/index'
 import { Route as EditIdRouteImport } from './routes/edit/$id'
+import { Route as DeckIdRouteImport } from './routes/deck/$id'
 import { Route as CardIdRouteImport } from './routes/card/$id'
 import { Route as AdminCardsRouteImport } from './routes/admin/cards'
+import { Route as DeckEditRouteRouteImport } from './routes/deck/edit/route'
+import { Route as DeckEditIdRouteImport } from './routes/deck/edit/$id'
 import { Route as ApiImagesIdRouteImport } from './routes/api/images/$id'
 
 const EditRouteRoute = EditRouteRouteImport.update({
   id: '/edit',
   path: '/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeckRouteRoute = DeckRouteRouteImport.update({
+  id: '/deck',
+  path: '/deck',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,6 +46,11 @@ const EditIdRoute = EditIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => EditRouteRoute,
 } as any)
+const DeckIdRoute = DeckIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => DeckRouteRoute,
+} as any)
 const CardIdRoute = CardIdRouteImport.update({
   id: '/card/$id',
   path: '/card/$id',
@@ -47,6 +61,16 @@ const AdminCardsRoute = AdminCardsRouteImport.update({
   path: '/admin/cards',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeckEditRouteRoute = DeckEditRouteRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => DeckRouteRoute,
+} as any)
+const DeckEditIdRoute = DeckEditIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => DeckEditRouteRoute,
+} as any)
 const ApiImagesIdRoute = ApiImagesIdRouteImport.update({
   id: '/api/images/$id',
   path: '/api/images/$id',
@@ -55,62 +79,87 @@ const ApiImagesIdRoute = ApiImagesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/deck': typeof DeckRouteRouteWithChildren
   '/edit': typeof EditRouteRouteWithChildren
+  '/deck/edit': typeof DeckEditRouteRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
   '/card/$id': typeof CardIdRoute
+  '/deck/$id': typeof DeckIdRoute
   '/edit/$id': typeof EditIdRoute
   '/edit/': typeof EditIndexRoute
   '/api/images/$id': typeof ApiImagesIdRoute
+  '/deck/edit/$id': typeof DeckEditIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/deck': typeof DeckRouteRouteWithChildren
+  '/deck/edit': typeof DeckEditRouteRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
   '/card/$id': typeof CardIdRoute
+  '/deck/$id': typeof DeckIdRoute
   '/edit/$id': typeof EditIdRoute
   '/edit': typeof EditIndexRoute
   '/api/images/$id': typeof ApiImagesIdRoute
+  '/deck/edit/$id': typeof DeckEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/deck': typeof DeckRouteRouteWithChildren
   '/edit': typeof EditRouteRouteWithChildren
+  '/deck/edit': typeof DeckEditRouteRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
   '/card/$id': typeof CardIdRoute
+  '/deck/$id': typeof DeckIdRoute
   '/edit/$id': typeof EditIdRoute
   '/edit/': typeof EditIndexRoute
   '/api/images/$id': typeof ApiImagesIdRoute
+  '/deck/edit/$id': typeof DeckEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/deck'
     | '/edit'
+    | '/deck/edit'
     | '/admin/cards'
     | '/card/$id'
+    | '/deck/$id'
     | '/edit/$id'
     | '/edit/'
     | '/api/images/$id'
+    | '/deck/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/deck'
+    | '/deck/edit'
     | '/admin/cards'
     | '/card/$id'
+    | '/deck/$id'
     | '/edit/$id'
     | '/edit'
     | '/api/images/$id'
+    | '/deck/edit/$id'
   id:
     | '__root__'
     | '/'
+    | '/deck'
     | '/edit'
+    | '/deck/edit'
     | '/admin/cards'
     | '/card/$id'
+    | '/deck/$id'
     | '/edit/$id'
     | '/edit/'
     | '/api/images/$id'
+    | '/deck/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DeckRouteRoute: typeof DeckRouteRouteWithChildren
   EditRouteRoute: typeof EditRouteRouteWithChildren
   AdminCardsRoute: typeof AdminCardsRoute
   CardIdRoute: typeof CardIdRoute
@@ -124,6 +173,13 @@ declare module '@tanstack/react-router' {
       path: '/edit'
       fullPath: '/edit'
       preLoaderRoute: typeof EditRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deck': {
+      id: '/deck'
+      path: '/deck'
+      fullPath: '/deck'
+      preLoaderRoute: typeof DeckRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -147,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditIdRouteImport
       parentRoute: typeof EditRouteRoute
     }
+    '/deck/$id': {
+      id: '/deck/$id'
+      path: '/$id'
+      fullPath: '/deck/$id'
+      preLoaderRoute: typeof DeckIdRouteImport
+      parentRoute: typeof DeckRouteRoute
+    }
     '/card/$id': {
       id: '/card/$id'
       path: '/card/$id'
@@ -161,6 +224,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCardsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/deck/edit': {
+      id: '/deck/edit'
+      path: '/edit'
+      fullPath: '/deck/edit'
+      preLoaderRoute: typeof DeckEditRouteRouteImport
+      parentRoute: typeof DeckRouteRoute
+    }
+    '/deck/edit/$id': {
+      id: '/deck/edit/$id'
+      path: '/$id'
+      fullPath: '/deck/edit/$id'
+      preLoaderRoute: typeof DeckEditIdRouteImport
+      parentRoute: typeof DeckEditRouteRoute
+    }
     '/api/images/$id': {
       id: '/api/images/$id'
       path: '/api/images/$id'
@@ -170,6 +247,32 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface DeckEditRouteRouteChildren {
+  DeckEditIdRoute: typeof DeckEditIdRoute
+}
+
+const DeckEditRouteRouteChildren: DeckEditRouteRouteChildren = {
+  DeckEditIdRoute: DeckEditIdRoute,
+}
+
+const DeckEditRouteRouteWithChildren = DeckEditRouteRoute._addFileChildren(
+  DeckEditRouteRouteChildren,
+)
+
+interface DeckRouteRouteChildren {
+  DeckEditRouteRoute: typeof DeckEditRouteRouteWithChildren
+  DeckIdRoute: typeof DeckIdRoute
+}
+
+const DeckRouteRouteChildren: DeckRouteRouteChildren = {
+  DeckEditRouteRoute: DeckEditRouteRouteWithChildren,
+  DeckIdRoute: DeckIdRoute,
+}
+
+const DeckRouteRouteWithChildren = DeckRouteRoute._addFileChildren(
+  DeckRouteRouteChildren,
+)
 
 interface EditRouteRouteChildren {
   EditIdRoute: typeof EditIdRoute
@@ -187,6 +290,7 @@ const EditRouteRouteWithChildren = EditRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DeckRouteRoute: DeckRouteRouteWithChildren,
   EditRouteRoute: EditRouteRouteWithChildren,
   AdminCardsRoute: AdminCardsRoute,
   CardIdRoute: CardIdRoute,

@@ -6,6 +6,7 @@ import { TemplatePicker } from './components/sidebar/TemplatePicker'
 import { ModelSettingsModal } from './components/ModelSettingsModal'
 import { useCardStore } from './lib/cardStore'
 import { useGenerationSettings } from './lib/generationSettings'
+import { Button } from './components/Button'
 
 interface AppProps {
   autoGenerateImage?: boolean
@@ -16,6 +17,10 @@ function App({ autoGenerateImage }: AppProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [showModelSettings, setShowModelSettings] = useState(false)
   const generationSettings = useGenerationSettings()
+  const undo = useCardStore((s) => s.undo)
+  const redo = useCardStore((s) => s.redo)
+  const canUndo = useCardStore((s) => s.past.length > 0)
+  const canRedo = useCardStore((s) => s.future.length > 0)
 
   useEffect(() => {
     // Make Enter insert <br> instead of wrapping each line in its own <div>/<p>,
@@ -32,6 +37,14 @@ function App({ autoGenerateImage }: AppProps) {
       <Toolbar canvasRef={canvasRef} onOpenModelSettings={() => setShowModelSettings(true)} />
       <div className="app-body">
         <aside className="app-sidebar">
+          <div className="undo-redo-row">
+            <Button onClick={undo} disabled={!canUndo}>
+              Undo
+            </Button>
+            <Button onClick={redo} disabled={!canRedo}>
+              Redo
+            </Button>
+          </div>
           <TemplatePicker templateId={card.templateId} />
           <CardFieldsPanel card={card} />
         </aside>
