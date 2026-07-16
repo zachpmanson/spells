@@ -4,7 +4,6 @@ import { useCardStore } from '../lib/cardStore'
 import { exportCardAsJson, importCardsFromFile } from '../lib/persistence'
 import { exportCardCanvasAsPng } from '../lib/export'
 import { Button } from './Button'
-import { AddToDeckSelect } from './AddToDeckSelect'
 
 interface ToolbarProps {
   canvasRef: React.RefObject<HTMLDivElement | null>
@@ -45,10 +44,6 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
     copiedTimeoutRef.current = setTimeout(() => setJustCopied(false), 2000)
   }
 
-  function getCardPublicId(): string | null {
-    return card.publicId ?? (saveToLibrary() ? useCardStore.getState().card.publicId : null)
-  }
-
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -58,23 +53,27 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
   }
 
   return (
-    <div className="toolbar">
-      <Button onClick={() => navigate({ to: '/' })}>Library</Button>
-      <Button onClick={onOpenModelSettings}>Settings</Button>
-      <Button onClick={handleSaveToLibrary}>Save to library</Button>
-      <Button onClick={handleCopyShareLink}>{justCopied ? 'Copied ✓' : 'Copy Read Only Link'}</Button>
-      <AddToDeckSelect getCardPublicId={getCardPublicId} />
-      <Button onClick={() => exportCardAsJson(card)}>Export JSON</Button>
-      <label className="btn import-label">
-        Import JSON
-        <input type="file" accept="application/json" onChange={handleImport} />
-      </label>
-      <Button onClick={() => canvasRef.current && exportCardCanvasAsPng(canvasRef.current, card.title)}>
-        Export PNG
-      </Button>
-      <Button className="toolbar-spacer-btn" onClick={newCard}>
-        New card
-      </Button>
+    <div className="editor-toolbar">
+      <div className="toolbar">
+        <h1 className="editor-toolbar-title">{card.title ? `Edit ${card.title}` : 'Edit card'}</h1>
+        <Button className="toolbar-spacer-btn" onClick={() => navigate({ to: '/' })}>
+          Library
+        </Button>
+        <Button onClick={newCard}>New card</Button>
+        <Button onClick={handleSaveToLibrary}>Save to library</Button>
+      </div>
+      <div className="toolbar">
+        <Button onClick={onOpenModelSettings}>Settings</Button>
+        <Button onClick={handleCopyShareLink}>{justCopied ? 'Copied ✓' : 'Copy Read Only Link'}</Button>
+        <Button onClick={() => exportCardAsJson(card)}>Export JSON</Button>
+        <label className="btn import-label">
+          Import JSON
+          <input type="file" accept="application/json" onChange={handleImport} />
+        </label>
+        <Button onClick={() => canvasRef.current && exportCardCanvasAsPng(canvasRef.current, card.title)}>
+          Export PNG
+        </Button>
+      </div>
     </div>
   )
 }

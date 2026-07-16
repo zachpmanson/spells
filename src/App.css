@@ -48,6 +48,16 @@ body {
   margin-left: auto;
 }
 
+.editor-toolbar-title {
+  margin: 0 0.75rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #eee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .btn {
   display: inline-block;
   background: #2a2a2a;
