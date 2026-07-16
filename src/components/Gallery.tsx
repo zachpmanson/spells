@@ -123,8 +123,12 @@ export function Gallery() {
                 <button
                   type="button"
                   className="library-grid-item-preview"
-                  onClick={() => navigate({ to: '/edit/$id', params: { id: card.id } })}
-                  title={`Open ${card.title || 'Untitled'}`}
+                  onClick={() =>
+                    card.publicId
+                      ? navigate({ to: '/card/$id', params: { id: card.publicId } })
+                      : navigate({ to: '/edit/$id', params: { id: card.id } })
+                  }
+                  title={`View ${card.title || 'Untitled'}`}
                 >
                   <CardPreview card={card} />
                 </button>
