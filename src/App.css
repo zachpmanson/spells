@@ -597,13 +597,14 @@ body {
 .deck-stack {
   position: relative;
   aspect-ratio: 5 / 7;
+  margin: 0 1rem;
 }
 
 .deck-stack-card {
   position: absolute;
   inset: 0;
   transform-origin: bottom center;
-  transform: translate(calc(var(--stack-i) * 6%), 0) rotate(calc(var(--stack-i) * 5deg));
+  transform: translate(calc(var(--fan-i) * 4%), 0) rotate(calc(var(--fan-i) * 3deg));
 }
 
 .deck-stack-card .card-preview {

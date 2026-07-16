@@ -73,14 +73,15 @@ export function Gallery() {
                     {previewCards.length === 0 ? (
                       <div className="deck-stack-empty">No cards yet</div>
                     ) : (
-                      previewCards
-                        .slice(0, 3)
-                        .reverse()
-                        .map((card, i) => (
-                          <div key={card.publicId} className="deck-stack-card" style={{ '--stack-i': previewCards.length - 1 - i } as CSSProperties}>
-                            <CardPreview card={card} />
-                          </div>
-                        ))
+                      previewCards.slice(0, 3).map((card, i, arr) => (
+                        <div
+                          key={card.publicId}
+                          className="deck-stack-card"
+                          style={{ '--fan-i': i - (arr.length - 1) / 2 } as CSSProperties}
+                        >
+                          <CardPreview card={card} />
+                        </div>
+                      ))
                     )}
                   </Link>
                   <div className="library-grid-item-footer">
