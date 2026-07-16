@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { CardCanvas } from '../../components/CardCanvas'
 import { Button } from '../../components/Button'
+import { AddToDeckSelect } from '../../components/AddToDeckSelect'
 import { useCardStore } from '../../lib/cardStore'
 import { useDeckStore } from '../../lib/deckStore'
 import { getCard } from '../../server/getCard'
@@ -82,6 +83,7 @@ function CardViewRoute() {
                 </Button>
               )}
               <Button onClick={handleFork}>Fork</Button>
+              <AddToDeckSelect getCardPublicId={() => id} />
               <Button onClick={() => exportCardAsJson(card)}>Export JSON</Button>
               <Button
                 onClick={() => previewRef.current && exportCardCanvasAsPng(previewRef.current, card.title)}

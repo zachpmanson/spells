@@ -431,6 +431,31 @@ body {
   color: #eee;
 }
 
+.deck-view-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  justify-content: unset;
+}
+
+.deck-view-header-left {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.deck-view-header-title {
+  grid-column: 2;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #eee;
+  text-align: center;
+}
+
+.deck-view-header-right {
+  grid-column: 3;
+  justify-self: end;
+}
+
 .library-content {
   width: 100%;
   max-width: 1100px;
@@ -598,13 +623,12 @@ body {
 .deck-stack {
   position: relative;
   aspect-ratio: 5 / 7;
-  margin-bottom: 1.25rem;
 }
 
 .deck-stack-card {
   position: absolute;
   inset: 0;
-  transform: translate(calc(var(--stack-i) * 6%), calc(var(--stack-i) * 6%)) rotate(calc(var(--stack-i) * 3deg));
+  transform: translate(calc(var(--stack-i) * 6%), 0);
 }
 
 .deck-stack-card .card-preview {
