@@ -628,7 +628,8 @@ body {
 .deck-stack-card {
   position: absolute;
   inset: 0;
-  transform: translate(calc(var(--stack-i) * 6%), 0);
+  transform-origin: bottom center;
+  transform: translate(calc(var(--stack-i) * 6%), 0) rotate(calc(var(--stack-i) * 5deg));
 }
 
 .deck-stack-card .card-preview {
