@@ -19,8 +19,6 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
   const newCard = useCardStore((s) => s.newCard)
   const saveToLibrary = useCardStore((s) => s.saveToLibrary)
   const importCards = useCardStore((s) => s.importCards)
-  const [justSaved, setJustSaved] = useState(false)
-  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [justCopied, setJustCopied] = useState(false)
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const deckLibrary = useDeckStore((s) => s.deckLibrary)
@@ -36,7 +34,6 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
 
   useEffect(() => {
     return () => {
-      clearTimeout(savedTimeoutRef.current)
       clearTimeout(copiedTimeoutRef.current)
       clearTimeout(addedToDeckTimeoutRef.current)
     }
@@ -44,11 +41,12 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
 
   function handleSaveToLibrary() {
     const saved = saveToLibrary()
-    if (saved) {
-      setJustSaved(true)
-      clearTimeout(savedTimeoutRef.current)
-      savedTimeoutRef.current = setTimeout(() => setJustSaved(false), 2000)
-    }
+    if (!saved) return
+    const publicId = useCardStore.getState().card.publicId
+    // Reset the in-memory card and its persisted cache to blank so a later
+    // "New card" from the library doesn't reopen this just-saved card.
+    newCard()
+    if (publicId) navigate({ to: '/card/$id', params: { id: publicId } })
   }
 
   async function handleCopyShareLink() {
@@ -100,7 +98,7 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
     <div className="toolbar">
       <Button onClick={() => navigate({ to: '/' })}>Library</Button>
       <Button onClick={onOpenModelSettings}>Settings</Button>
-      <Button onClick={handleSaveToLibrary}>{justSaved ? 'Saved ✓' : 'Save to library'}</Button>
+      <Button onClick={handleSaveToLibrary}>Save to library</Button>
       <Button onClick={handleCopyShareLink}>{justCopied ? 'Copied ✓' : 'Copy Read Only Link'}</Button>
       <select className="btn add-to-deck-select" value="" onChange={handleAddToDeck} aria-label="Add to deck">
         <option value="" disabled>
