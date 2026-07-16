@@ -431,31 +431,6 @@ body {
   color: #eee;
 }
 
-.deck-view-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  justify-content: unset;
-}
-
-.deck-view-header-left {
-  grid-column: 1;
-  justify-self: start;
-}
-
-.deck-view-header-title {
-  grid-column: 2;
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #eee;
-  text-align: center;
-}
-
-.deck-view-header-right {
-  grid-column: 3;
-  justify-self: end;
-}
-
 .library-content {
   width: 100%;
   margin: 0;

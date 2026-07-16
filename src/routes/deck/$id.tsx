@@ -29,18 +29,14 @@ function DeckViewRoute() {
 
   return (
     <div className="library-page">
-      <div className="library-header deck-view-header">
-        <div className="deck-view-header-left">
-          <Button to="/">Library</Button>
-        </div>
-        <h1 className="deck-view-header-title">{data ? data.deck.title || 'Untitled deck' : ''}</h1>
-        <div className="deck-view-header-right">
-          {ownedDeck && (
-            <Button to="/deck/edit/$id" params={{ id: ownedDeck.editId }}>
-              Edit
-            </Button>
-          )}
-        </div>
+      <div className="library-header">
+        <Button to="/">Library</Button>
+        {data && <h1>{data.deck.title || 'Untitled deck'}</h1>}
+        {ownedDeck && (
+          <Button className="toolbar-spacer-btn" to="/deck/edit/$id" params={{ id: ownedDeck.editId }}>
+            Edit
+          </Button>
+        )}
       </div>
       <div className="library-content">
         {!data ? (
