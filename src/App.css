@@ -425,7 +425,7 @@ body {
 }
 
 .library-header h1 {
-  margin: 0;
+  margin: 0 0.75rem;
   font-size: 1.1rem;
   font-weight: 600;
   color: #eee;
@@ -480,7 +480,7 @@ body {
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1.25rem;
 }
 
