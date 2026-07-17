@@ -4,6 +4,7 @@ import path from 'node:path'
 import type { Deck } from '../types/deck'
 import { getDataDir } from './dataDir'
 import type { SavedCard } from './cardsDb'
+import { redactEditId } from './cardsDb'
 
 let db: DatabaseSync | null = null
 
@@ -81,6 +82,12 @@ export function getDeckByPublicId(publicId: string): SavedDeck | null {
   return row ? rowToDeck(row) : null
 }
 
+// A deck reached through its read-only publicId link must not carry a real
+// editId — redact it so the view surface can't be used to derive edit access.
+export function redactDeckEditId(deck: SavedDeck): SavedDeck {
+  return { ...deck, editId: '' }
+}
+
 export function getDeckByEditId(editId: string): SavedDeck | null {
   const row = getDb().prepare('SELECT * FROM decks WHERE editId = ?').get(editId) as unknown as DeckRow | undefined
   return row ? rowToDeck(row) : null
@@ -88,6 +95,7 @@ export function getDeckByEditId(editId: string): SavedDeck | null {
 
 interface CardJoinRow {
   publicId: string
+  editId: string
   id: string
   templateId: string
   title: string
@@ -106,6 +114,7 @@ function rowToSavedCard(row: CardJoinRow): SavedCard {
   return {
     id: row.id,
     publicId: row.publicId,
+    editId: row.editId,
     templateId: row.templateId,
     title: row.title,
     manaCost: row.manaCost,
@@ -129,7 +138,7 @@ export function listCardsInDeck(deckPublicId: string): SavedCard[] {
       ORDER BY deck_cards.addedAt ASC
     `)
     .all(deckPublicId) as unknown as CardJoinRow[]
-  return rows.map(rowToSavedCard)
+  return rows.map(rowToSavedCard).map(redactEditId)
 }
 
 export function listCardPreviewsForDecks(deckPublicIds: string[], limit = 3): Record<string, SavedCard[]> {
@@ -145,7 +154,7 @@ export function listCardPreviewsForDecks(deckPublicIds: string[], limit = 3): Re
         LIMIT ?
       `)
       .all(deckPublicId, limit) as unknown as CardJoinRow[]
-    result[deckPublicId] = rows.map(rowToSavedCard)
+    result[deckPublicId] = rows.map(rowToSavedCard).map(redactEditId)
   }
   return result
 }

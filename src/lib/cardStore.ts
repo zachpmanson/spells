@@ -21,7 +21,8 @@ interface CardStoreState {
   newCard: () => void
   newCardWithOverrides: (overrides: Partial<Card>) => void
   loadCard: (card: Card) => void
-  loadCardById: (id: string) => boolean
+  loadCardByEditId: (editId: string) => boolean
+  loadCardFromServer: (card: Card) => void
   saveToLibrary: () => boolean
   deleteFromLibrary: (id: string) => void
   importCards: (cards: Card[]) => void
@@ -127,11 +128,25 @@ export const useCardStore = create<CardStoreState>((set, get) => ({
     set({ card, past: [], future: [] })
   },
 
-  loadCardById: (id) => {
-    const found = get().library.find((c) => c.id === id)
+  loadCardByEditId: (editId) => {
+    const found = get().library.find((c) => c.editId === editId)
     if (!found) return false
     get().loadCard(found)
     return true
+  },
+
+  // Used when opening an edit link for a card that isn't in this browser's
+  // local library yet — pulls the server copy in and adopts it locally too.
+  loadCardFromServer: (card) => {
+    const { library } = get()
+    const existingIndex = library.findIndex((c) => c.publicId === card.publicId)
+    const nextLibrary =
+      existingIndex >= 0 ? library.map((c, i) => (i === existingIndex ? card : c)) : [...library, card]
+    if (!saveLibrary(nextLibrary)) {
+      window.alert('Could not save to your library: browser storage is full. Try deleting some saved cards first.')
+    }
+    persist(card)
+    set({ card, library: nextLibrary, past: [], future: [] })
   },
 
   saveToLibrary: () => {
@@ -148,7 +163,10 @@ export const useCardStore = create<CardStoreState>((set, get) => ({
     }
     persist(cardToSave)
     set({ card: cardToSave, library: nextLibrary })
-    saveCard({ data: cardToSave }).catch((err) => console.error('Failed to record card server-side:', err))
+    saveCard({ data: cardToSave }).catch((err) => {
+      console.error('Failed to record card server-side:', err)
+      window.alert('Could not sync this card to the server — it may belong to someone else.')
+    })
     return true
   },
 

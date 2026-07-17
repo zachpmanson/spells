@@ -127,7 +127,7 @@ export function Gallery() {
                   onClick={() =>
                     card.publicId
                       ? navigate({ to: '/card/$id', params: { id: card.publicId } })
-                      : navigate({ to: '/edit/$id', params: { id: card.id } })
+                      : navigate({ to: '/edit/$id', params: { id: card.editId } })
                   }
                   title={`View ${card.title || 'Untitled'}`}
                 >

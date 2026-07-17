@@ -32,6 +32,7 @@ export interface CoverImage {
 export interface Card {
   id: string
   publicId: string | null
+  editId: string
   templateId: string
   title: string
   manaCost: string
@@ -47,6 +48,7 @@ export function createBlankCard(templateId: string): Card {
   return {
     id: crypto.randomUUID(),
     publicId: null,
+    editId: crypto.randomUUID(),
     templateId,
     title: '',
     manaCost: '',

@@ -38,6 +38,37 @@ function migrateLegacyIdPrimaryKey(instance: DatabaseSync): void {
   `)
 }
 
+function migrateAddEditId(instance: DatabaseSync): void {
+  const columns = instance.prepare('PRAGMA table_info(cards)').all() as unknown as Array<{ name: string }>
+  if (columns.length === 0 || columns.some((c) => c.name === 'editId')) return
+
+  // Existing rows predate the edit-link mechanic, so they have no client-known
+  // editId — mint a random one server-side. Anyone who created those cards
+  // before this migration will need their old share/edit link re-issued.
+  instance.exec(`
+    ALTER TABLE cards RENAME TO cards_legacy;
+    CREATE TABLE cards (
+      publicId TEXT PRIMARY KEY,
+      editId TEXT NOT NULL UNIQUE,
+      id TEXT NOT NULL,
+      templateId TEXT NOT NULL,
+      title TEXT NOT NULL,
+      manaCost TEXT NOT NULL,
+      typeLine TEXT NOT NULL,
+      rulesText TEXT NOT NULL,
+      flavorText TEXT NOT NULL,
+      showFlavorText INTEGER NOT NULL,
+      powerToughness TEXT NOT NULL,
+      coverImage TEXT,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
+    INSERT INTO cards (publicId, editId, id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, createdAt, updatedAt)
+      SELECT publicId, lower(hex(randomblob(16))), id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, createdAt, updatedAt FROM cards_legacy;
+    DROP TABLE cards_legacy;
+  `)
+}
+
 function getDb(): DatabaseSync {
   if (db) return db
 
@@ -46,6 +77,7 @@ function getDb(): DatabaseSync {
   db.exec(`
     CREATE TABLE IF NOT EXISTS cards (
       publicId TEXT PRIMARY KEY,
+      editId TEXT NOT NULL UNIQUE,
       id TEXT NOT NULL,
       templateId TEXT NOT NULL,
       title TEXT NOT NULL,
@@ -61,11 +93,13 @@ function getDb(): DatabaseSync {
     )
   `)
   migrateLegacyIdPrimaryKey(db)
+  migrateAddEditId(db)
   return db
 }
 
 interface CardRow {
   publicId: string
+  editId: string
   id: string
   templateId: string
   title: string
@@ -84,6 +118,7 @@ function rowToCard(row: CardRow): SavedCard {
   return {
     id: row.id,
     publicId: row.publicId,
+    editId: row.editId,
     templateId: row.templateId,
     title: row.title,
     manaCost: row.manaCost,
@@ -100,11 +135,15 @@ function rowToCard(row: CardRow): SavedCard {
 
 export function upsertSavedCard(card: Card): void {
   if (!card.publicId) throw new Error('Card must have a publicId before it can be saved server-side')
+  const existing = getSavedCard(card.publicId)
+  if (existing && existing.editId !== card.editId) {
+    throw new Error('Not authorized to edit this card')
+  }
   const now = new Date().toISOString()
   getDb()
     .prepare(`
-      INSERT INTO cards (publicId, id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO cards (publicId, editId, id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(publicId) DO UPDATE SET
         id = excluded.id,
         templateId = excluded.templateId,
@@ -120,6 +159,7 @@ export function upsertSavedCard(card: Card): void {
     `)
     .run(
       card.publicId,
+      card.editId,
       card.id,
       card.templateId,
       card.title,
@@ -145,7 +185,19 @@ export function getSavedCard(publicId: string): SavedCard | null {
   return row ? rowToCard(row) : null
 }
 
+export function getSavedCardByEditId(editId: string): SavedCard | null {
+  const row = getDb().prepare('SELECT * FROM cards WHERE editId = ?').get(editId) as unknown as CardRow | undefined
+  return row ? rowToCard(row) : null
+}
+
 export function listSavedCardIds(): string[] {
   const rows = getDb().prepare('SELECT publicId FROM cards').all() as unknown as Array<{ publicId: string }>
   return rows.map((row) => row.publicId)
+}
+
+// Cards reachable through a read-only link (public view, deck listings) must
+// not carry a real editId — redact it so the view surface can't be used to
+// derive edit access.
+export function redactEditId<T extends { editId: string }>(card: T): T {
+  return { ...card, editId: '' }
 }

@@ -39,7 +39,7 @@ function AdminCardsRoute() {
                   <span>{card.title || 'Untitled'}</span>
                   <div className="library-grid-item-meta">
                     <span>{new Date(card.updatedAt).toLocaleString()}</span>
-                    <Link to="/edit/$id" params={{ id: card.id }}>
+                    <Link to="/edit/$id" params={{ id: card.editId }}>
                       Edit
                     </Link>
                   </div>

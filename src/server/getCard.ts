@@ -1,8 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getSavedCard } from './cardsDb'
+import { getSavedCard, redactEditId } from './cardsDb'
 
 export const getCard = createServerFn({ method: 'GET' })
   .validator((data: { publicId: string }) => data)
   .handler(async ({ data }) => {
-    return getSavedCard(data.publicId)
+    const card = getSavedCard(data.publicId)
+    return card ? redactEditId(card) : null
   })

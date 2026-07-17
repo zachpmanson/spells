@@ -54,6 +54,7 @@ function CardViewRoute() {
     const forked: Card = {
       id: crypto.randomUUID(),
       publicId: null,
+      editId: crypto.randomUUID(),
       templateId: card.templateId,
       title: card.title,
       manaCost: card.manaCost,
@@ -66,7 +67,7 @@ function CardViewRoute() {
     }
     loadCard(forked)
     saveToLibrary()
-    navigate({ to: '/edit/$id', params: { id: forked.id } })
+    navigate({ to: '/edit/$id', params: { id: forked.editId } })
   }
 
   return (
@@ -78,7 +79,7 @@ function CardViewRoute() {
             <span className="card-view-title">{card.title || 'Untitled'}</span>
             <div className="card-view-actions toolbar-spacer-btn">
               {ownedCard && (
-                <Button to="/edit/$id" params={{ id: ownedCard.id }}>
+                <Button to="/edit/$id" params={{ id: ownedCard.editId }}>
                   Edit
                 </Button>
               )}
