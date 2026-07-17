@@ -16,6 +16,7 @@ import { Route as EditIndexRouteImport } from './routes/edit/index'
 import { Route as EditIdRouteImport } from './routes/edit/$id'
 import { Route as DeckIdRouteImport } from './routes/deck/$id'
 import { Route as CardIdRouteImport } from './routes/card/$id'
+import { Route as AdminDecksRouteImport } from './routes/admin/decks'
 import { Route as AdminCardsRouteImport } from './routes/admin/cards'
 import { Route as DeckEditRouteRouteImport } from './routes/deck/edit/route'
 import { Route as DeckEditIdRouteImport } from './routes/deck/edit/$id'
@@ -56,6 +57,11 @@ const CardIdRoute = CardIdRouteImport.update({
   path: '/card/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminDecksRoute = AdminDecksRouteImport.update({
+  id: '/admin/decks',
+  path: '/admin/decks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCardsRoute = AdminCardsRouteImport.update({
   id: '/admin/cards',
   path: '/admin/cards',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/edit': typeof EditRouteRouteWithChildren
   '/deck/edit': typeof DeckEditRouteRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
+  '/admin/decks': typeof AdminDecksRoute
   '/card/$id': typeof CardIdRoute
   '/deck/$id': typeof DeckIdRoute
   '/edit/$id': typeof EditIdRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/deck': typeof DeckRouteRouteWithChildren
   '/deck/edit': typeof DeckEditRouteRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
+  '/admin/decks': typeof AdminDecksRoute
   '/card/$id': typeof CardIdRoute
   '/deck/$id': typeof DeckIdRoute
   '/edit/$id': typeof EditIdRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/edit': typeof EditRouteRouteWithChildren
   '/deck/edit': typeof DeckEditRouteRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
+  '/admin/decks': typeof AdminDecksRoute
   '/card/$id': typeof CardIdRoute
   '/deck/$id': typeof DeckIdRoute
   '/edit/$id': typeof EditIdRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/edit'
     | '/deck/edit'
     | '/admin/cards'
+    | '/admin/decks'
     | '/card/$id'
     | '/deck/$id'
     | '/edit/$id'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/deck'
     | '/deck/edit'
     | '/admin/cards'
+    | '/admin/decks'
     | '/card/$id'
     | '/deck/$id'
     | '/edit/$id'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/edit'
     | '/deck/edit'
     | '/admin/cards'
+    | '/admin/decks'
     | '/card/$id'
     | '/deck/$id'
     | '/edit/$id'
@@ -162,6 +174,7 @@ export interface RootRouteChildren {
   DeckRouteRoute: typeof DeckRouteRouteWithChildren
   EditRouteRoute: typeof EditRouteRouteWithChildren
   AdminCardsRoute: typeof AdminCardsRoute
+  AdminDecksRoute: typeof AdminDecksRoute
   CardIdRoute: typeof CardIdRoute
   ApiImagesIdRoute: typeof ApiImagesIdRoute
 }
@@ -215,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/card/$id'
       fullPath: '/card/$id'
       preLoaderRoute: typeof CardIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/decks': {
+      id: '/admin/decks'
+      path: '/admin/decks'
+      fullPath: '/admin/decks'
+      preLoaderRoute: typeof AdminDecksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/cards': {
@@ -293,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeckRouteRoute: DeckRouteRouteWithChildren,
   EditRouteRoute: EditRouteRouteWithChildren,
   AdminCardsRoute: AdminCardsRoute,
+  AdminDecksRoute: AdminDecksRoute,
   CardIdRoute: CardIdRoute,
   ApiImagesIdRoute: ApiImagesIdRoute,
 }

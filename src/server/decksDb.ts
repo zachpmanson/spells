@@ -77,6 +77,11 @@ export function upsertDeck(deck: Deck): void {
     .run(deck.publicId, deck.editId, deck.id, deck.title, now, now)
 }
 
+export function listSavedDecks(): SavedDeck[] {
+  const rows = getDb().prepare('SELECT * FROM decks ORDER BY updatedAt DESC').all() as unknown as DeckRow[]
+  return rows.map(rowToDeck)
+}
+
 export function getDeckByPublicId(publicId: string): SavedDeck | null {
   const row = getDb().prepare('SELECT * FROM decks WHERE publicId = ?').get(publicId) as unknown as DeckRow | undefined
   return row ? rowToDeck(row) : null
