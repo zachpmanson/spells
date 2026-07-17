@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import type { BoxCoords, CoverImage } from '../../types/card'
 import { generateCoverImage, uploadCoverImage } from '../../lib/imageGen'
+import { ImageLayerEmpty } from './ImageLayerEmpty'
+import { ImageLayerLoading } from './ImageLayerLoading'
+import { ImageLayerUrlInput } from './ImageLayerUrlInput'
+import { ImageLayerError } from './ImageLayerError'
 
 interface ImageLayerProps {
   box: BoxCoords
@@ -126,14 +130,11 @@ export function ImageLayer({
           }}
         />
       ) : (
-        <div className="image-layer-empty">No cover image</div>
+        <ImageLayerEmpty />
       )}
 
       {!readOnly && (generating || uploading) && (
-        <div className="image-layer-loading">
-          <div className="spinner" />
-          <span>{generating ? 'Generating image…' : 'Uploading image…'}</span>
-        </div>
+        <ImageLayerLoading label={generating ? 'Generating image…' : 'Uploading image…'} />
       )}
 
       {!readOnly && (
@@ -167,22 +168,9 @@ export function ImageLayer({
             )}
           </div>
           {showUrlInput && (
-            <div className="image-layer-url-input">
-              <input
-                type="text"
-                placeholder="https://example.com/image.png"
-                value={urlValue}
-                onChange={(e) => setUrlValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleUrlSubmit()
-                }}
-              />
-              <button type="button" className="btn-overlay" onClick={handleUrlSubmit}>
-                Use
-              </button>
-            </div>
+            <ImageLayerUrlInput value={urlValue} onChange={setUrlValue} onSubmit={handleUrlSubmit} />
           )}
-          {error && <div className="image-layer-error">{error}</div>}
+          {error && <ImageLayerError message={error} />}
         </>
       )}
     </div>

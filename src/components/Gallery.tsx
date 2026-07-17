@@ -1,12 +1,13 @@
-import { Link, useNavigate } from '@tanstack/react-router';
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 import { useCardStore } from '../lib/cardStore';
 import { useDeckStore } from '../lib/deckStore';
 import { getSavedCardIds } from '../server/listSavedCardIds';
 import { listDeckCardPreviews } from '../server/listDeckCardPreviews';
 import type { SavedCard } from '../server/cardsDb';
 import { Button } from './Button';
-import { CardPreview } from './CardPreview';
+import { DeckTile } from './DeckTile';
+import { CardTile } from './CardTile';
 
 export function Gallery() {
   const navigate = useNavigate()
@@ -60,55 +61,14 @@ export function Gallery() {
           <p>No decks yet.</p>
         ) : (
           <ul className="library-grid deck-grid">
-            {deckLibrary.map((deck) => {
-              const previewCards = deckPreviews[deck.publicId] ?? []
-              return (
-                <li key={deck.id} className="library-grid-item">
-                  <Link
-                    to="/deck/$id"
-                    params={{ id: deck.publicId }}
-                    className="library-grid-item-preview deck-stack"
-                    title={`View ${deck.title || 'Untitled deck'}`}
-                  >
-                    {previewCards.length === 0 ? (
-                      <div className="deck-stack-empty">No cards yet</div>
-                    ) : (
-                      previewCards.slice(0, 3).map((card, i, arr) => (
-                        <div
-                          key={card.publicId}
-                          className="deck-stack-card"
-                          style={{ '--fan-i': i - (arr.length - 1) / 2 } as CSSProperties}
-                        >
-                          <CardPreview card={card} />
-                        </div>
-                      ))
-                    )}
-                  </Link>
-                  <div className="library-grid-item-footer">
-                    <span>{deck.title || 'Untitled deck'}</span>
-                    <Button size="sm" to="/deck/edit/$id" params={{ id: deck.editId }}>
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      aria-label={`Delete ${deck.title || 'Untitled deck'}`}
-                      title="Remove from library"
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            `Remove "${deck.title || 'Untitled deck'}" from your library? The deck itself won't be deleted.`,
-                          )
-                        ) {
-                          deleteDeckFromLibrary(deck.id)
-                        }
-                      }}
-                    >
-                      🗑️
-                    </Button>
-                  </div>
-                </li>
-              )
-            })}
+            {deckLibrary.map((deck) => (
+              <DeckTile
+                key={deck.id}
+                deck={deck}
+                previewCards={deckPreviews[deck.publicId] ?? []}
+                onDelete={() => deleteDeckFromLibrary(deck.id)}
+              />
+            ))}
           </ul>
         )}
 
@@ -120,47 +80,17 @@ export function Gallery() {
         ) : (
           <ul className="library-grid">
             {library.map((card) => (
-              <li key={card.id} className="library-grid-item">
-                <button
-                  type="button"
-                  className="library-grid-item-preview"
-                  onClick={() =>
-                    card.publicId
-                      ? navigate({ to: '/card/$id', params: { id: card.publicId } })
-                      : navigate({ to: '/edit/$id', params: { id: card.editId } })
-                  }
-                  title={`View ${card.title || 'Untitled'}`}
-                >
-                  <CardPreview card={card} />
-                </button>
-                <div className="library-grid-item-footer">
-                  <span>{card.title || 'Untitled'}</span>
-                  {savedIds && (
-                    <span
-                      className={
-                        card.publicId && savedIds.has(card.publicId)
-                          ? 'card-sync-badge card-sync-badge-saved'
-                          : 'card-sync-badge card-sync-badge-local'
-                      }
-                      title={card.publicId && savedIds.has(card.publicId) ? 'Saved to server' : 'Local only — not yet saved to server'}
-                    >
-                      {card.publicId && savedIds.has(card.publicId) ? 'Saved' : 'Local only'}
-                    </span>
-                  )}
-                  <Button
-                    size="sm"
-                    aria-label={`Delete ${card.title || 'Untitled'}`}
-                    title="Delete"
-                    onClick={() => {
-                      if (window.confirm(`Delete "${card.title || 'Untitled'}"? This can't be undone.`)) {
-                        deleteFromLibrary(card.id)
-                      }
-                    }}
-                  >
-                    🗑️
-                  </Button>
-                </div>
-              </li>
+              <CardTile
+                key={card.id}
+                card={card}
+                isSaved={savedIds ? Boolean(card.publicId && savedIds.has(card.publicId)) : null}
+                onOpen={() =>
+                  card.publicId
+                    ? navigate({ to: '/card/$id', params: { id: card.publicId } })
+                    : navigate({ to: '/edit/$id', params: { id: card.editId } })
+                }
+                onDelete={() => deleteFromLibrary(card.id)}
+              />
             ))}
           </ul>
         )}
