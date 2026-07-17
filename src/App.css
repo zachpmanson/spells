@@ -16,6 +16,19 @@
   box-sizing: border-box;
 }
 
+/* No page-wide crossfade — swap instantly, except for elements carrying a
+   view-transition-name (cards/decks), which get the browser's default
+   shared-element morph (position/size) animation. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(*) {
+  animation-duration: 0.28s;
+  animation-timing-function: ease;
+}
+
 html,
 body {
   margin: 0;
@@ -637,6 +650,11 @@ body {
   inset: 0;
   transform-origin: bottom center;
   transform: translate(calc(var(--fan-i) * 4%), 0) rotate(calc(var(--fan-i) * 3deg));
+  transition: transform 0.2s ease;
+}
+
+.deck-stack:hover .deck-stack-card {
+  transform: translate(calc(var(--fan-i) * 7%), 0) rotate(calc(var(--fan-i) * 6deg));
 }
 
 .deck-stack-card .card-preview {

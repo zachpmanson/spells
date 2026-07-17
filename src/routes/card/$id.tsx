@@ -98,7 +98,7 @@ function CardViewRoute() {
       <div className="card-view-body">
         {card ? (
           <div className="app-canvas-wrapper">
-            <CardCanvas ref={previewRef} card={card} readOnly />
+            <CardCanvas ref={previewRef} card={card} readOnly transitionName={`card-${id}`} />
           </div>
         ) : (
           <p>Card not found.</p>

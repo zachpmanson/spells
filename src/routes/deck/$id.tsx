@@ -29,7 +29,7 @@ function DeckViewRoute() {
 
   return (
     <div className="library-page">
-      <div className="library-header">
+      <div className="library-header" style={{ viewTransitionName: `deck-${id}` }}>
         <Button to="/">Library</Button>
         {data && <h1>{data.deck.title || 'Untitled deck'}</h1>}
         {ownedDeck && (
@@ -53,7 +53,7 @@ function DeckViewRoute() {
                   className="library-grid-item-preview"
                   title={`View ${card.title || 'Untitled'}`}
                 >
-                  <CardPreview card={card} />
+                  <CardPreview card={card} transitionName={`card-${card.publicId}`} />
                 </Link>
                 <div className="library-grid-item-footer">
                   <span>{card.title || 'Untitled'}</span>

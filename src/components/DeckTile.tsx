@@ -19,6 +19,7 @@ export function DeckTile({ deck, previewCards, onDelete }: DeckTileProps) {
         params={{ id: deck.publicId }}
         className="library-grid-item-preview deck-stack"
         title={`View ${deck.title || 'Untitled deck'}`}
+        style={{ viewTransitionName: `deck-${deck.publicId}` }}
       >
         {previewCards.length === 0 ? (
           <div className="deck-stack-empty">No cards yet</div>

@@ -12,10 +12,11 @@ interface CardCanvasProps {
   textModel?: string
   style?: string
   readOnly?: boolean
+  transitionName?: string
 }
 
 export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function CardCanvas(
-  { card, autoGenerateImage, imageModel, textModel, style, readOnly = false },
+  { card, autoGenerateImage, imageModel, textModel, style, readOnly = false, transitionName },
   ref,
 ) {
   const updateField = useCardStore((s) => s.updateField)
@@ -44,6 +45,7 @@ export const CardCanvas = forwardRef<HTMLDivElement, CardCanvasProps>(function C
         aspectRatio: `${template.aspectRatio}`,
         backgroundColor: '#1a1a1a',
         overflow: 'hidden',
+        viewTransitionName: transitionName,
       }}
     >
       <ImageLayer

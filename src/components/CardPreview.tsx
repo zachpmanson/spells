@@ -3,9 +3,10 @@ import { getTemplate } from '../templates/templates'
 
 interface CardPreviewProps {
   card: Card
+  transitionName?: string
 }
 
-export function CardPreview({ card }: CardPreviewProps) {
+export function CardPreview({ card, transitionName }: CardPreviewProps) {
   const template = getTemplate(card.templateId)
   const showFlavorText = card.showFlavorText && Boolean(template.fields.flavorText)
 
@@ -29,6 +30,7 @@ export function CardPreview({ card }: CardPreviewProps) {
         aspectRatio: `${template.aspectRatio}`,
         backgroundColor: '#1a1a1a',
         overflow: 'hidden',
+        viewTransitionName: transitionName,
       }}
     >
       {card.coverImage && (

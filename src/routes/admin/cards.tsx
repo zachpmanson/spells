@@ -44,7 +44,7 @@ function AdminCardsRoute() {
                   className="library-grid-item-preview"
                   title={`View ${card.title || 'Untitled'}`}
                 >
-                  <CardPreview card={card} />
+                  <CardPreview card={card} transitionName={`card-${card.publicId}`} />
                 </Link>
                 <div className="library-grid-item-footer library-grid-item-footer-stacked">
                   <span>{card.title || 'Untitled'}</span>

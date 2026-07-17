@@ -18,7 +18,7 @@ export function CardTile({ card, isSaved, onOpen, onDelete }: CardTileProps) {
         onClick={onOpen}
         title={`View ${card.title || 'Untitled'}`}
       >
-        <CardPreview card={card} />
+        <CardPreview card={card} transitionName={`card-${card.publicId ?? card.id}`} />
       </button>
       <div className="library-grid-item-footer">
         <span>{card.title || 'Untitled'}</span>
