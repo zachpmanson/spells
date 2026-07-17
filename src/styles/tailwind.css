@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface-950: #111111;
+  --color-surface-900: #1c1c1c;
+  --color-surface-850: #181818;
+  --color-surface-800: #222222;
+  --color-surface-700: #2a2a2a;
+
+  --color-border-800: #333333;
+  --color-border-700: #3a3a3a;
+  --color-border-600: #4a4a4a;
+  --color-border-500: #555555;
+
+  --color-text-100: #eeeeee;
+  --color-text-400: #aaaaaa;
+  --color-text-500: #999999;
+  --color-text-600: #666666;
+
+  --color-saved: #3c9650;
+  --color-local: #b48c28;
+
+  --font-beleren: 'Beleren', Georgia, serif;
+  --font-mplantin: 'MPlantin', Georgia, serif;
+}
+
+@font-face {
+  font-family: 'Beleren';
+  src: url('/fonts/beleren-b.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MPlantin';
+  src: url('/fonts/mplantin.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

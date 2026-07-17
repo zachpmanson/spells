@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -17,5 +18,6 @@ export default defineConfig({
     tanstackStart(),
     // react's vite plugin must come after start's vite plugin
     viteReact(),
+    tailwindcss(),
   ],
 })
