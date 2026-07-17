@@ -4,6 +4,7 @@ import { CardPreview } from '../../components/CardPreview'
 import { Button } from '../../components/Button'
 import { useDeckStore } from '../../lib/deckStore'
 import { getDeck } from '../../server/getDeck'
+import type { CardNavState } from '../card/$id'
 
 export const Route = createFileRoute('/deck/$id')({
   loader: ({ params }) => getDeck({ data: { publicId: params.id } }),
@@ -50,6 +51,10 @@ function DeckViewRoute() {
                 <Link
                   to="/card/$id"
                   params={{ id: card.publicId }}
+                  // Cast needed: HistoryState isn't augmented with our custom field (that
+                  // needs @tanstack/history as a direct dependency, bumping the Nix-pinned
+                  // pnpm lockfile hash). `satisfies` still checks the literal's shape.
+                  state={({ fromDeckId: id } satisfies CardNavState) as any}
                   className="library-grid-item-preview"
                   title={`View ${card.title || 'Untitled'}`}
                 >

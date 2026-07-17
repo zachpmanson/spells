@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { CardCanvas } from '../../components/CardCanvas'
 import { Button } from '../../components/Button'
@@ -10,6 +10,13 @@ import { listDecksContainingCard } from '../../server/listDecksContainingCard'
 import { exportCardCanvasAsPng } from '../../lib/export'
 import { exportCardAsJson } from '../../lib/persistence'
 import type { Card } from '../../types/card'
+
+// Ephemeral navigation context (carried via router location state, not the
+// URL, so shareable /card/$id links stay clean) — lets this page pick a
+// view-transition-name matching whichever element it actually navigated from.
+export interface CardNavState {
+  fromDeckId?: string
+}
 
 export const Route = createFileRoute('/card/$id')({
   loader: ({ params }) => getCard({ data: { publicId: params.id } }),
@@ -23,6 +30,8 @@ function CardViewRoute() {
   const { id } = Route.useParams()
   const card = Route.useLoaderData()
   const navigate = useNavigate()
+  const fromDeckId = useLocation({ select: (location) => (location.state as CardNavState).fromDeckId })
+  const transitionName = fromDeckId ? `deck-${fromDeckId}-card-${id}` : `card-${id}`
   const hydrateFromStorage = useCardStore((s) => s.hydrateFromStorage)
   const loadCard = useCardStore((s) => s.loadCard)
   const saveToLibrary = useCardStore((s) => s.saveToLibrary)
@@ -98,7 +107,7 @@ function CardViewRoute() {
       <div className="card-view-body">
         {card ? (
           <div className="app-canvas-wrapper">
-            <CardCanvas ref={previewRef} card={card} readOnly transitionName={`card-${id}`} />
+            <CardCanvas ref={previewRef} card={card} readOnly transitionName={transitionName} />
           </div>
         ) : (
           <p>Card not found.</p>
