@@ -46,7 +46,7 @@ export function Gallery() {
   return (
     <div className="library-page">
       <div className="library-header">
-        <h1>Library</h1>
+        <h1 style={{ viewTransitionName: 'library-title' }}>Library</h1>
         <div className="library-header-actions">
           <Button onClick={handleNewDeck}>New deck</Button>
           <Button onClick={() => navigate({ to: '/edit' })}>New card</Button>

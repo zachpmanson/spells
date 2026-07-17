@@ -54,7 +54,7 @@ function DeckEditRoute() {
   return (
     <div className="library-page">
       <div className="library-header">
-        <Button to="/">Library</Button>
+        <Button to="/" style={{ viewTransitionName: 'library-title' }}>Library</Button>
         {data && (
           <>
             <input
