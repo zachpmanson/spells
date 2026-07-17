@@ -175,9 +175,12 @@ export function upsertSavedCard(card: Card): void {
     )
 }
 
-export function listSavedCards(): SavedCard[] {
-  const rows = getDb().prepare('SELECT * FROM cards ORDER BY updatedAt DESC').all() as unknown as CardRow[]
-  return rows.map(rowToCard)
+export function listSavedCards(page = 0, pageSize = 24): { cards: SavedCard[]; total: number } {
+  const rows = getDb()
+    .prepare('SELECT * FROM cards ORDER BY updatedAt DESC LIMIT ? OFFSET ?')
+    .all(pageSize, page * pageSize) as unknown as CardRow[]
+  const { count } = getDb().prepare('SELECT COUNT(*) AS count FROM cards').get() as unknown as { count: number }
+  return { cards: rows.map(rowToCard), total: count }
 }
 
 export function getSavedCard(publicId: string): SavedCard | null {

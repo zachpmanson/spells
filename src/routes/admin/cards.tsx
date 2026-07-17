@@ -1,10 +1,20 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { CardPreview } from '../../components/CardPreview'
 import { Button } from '../../components/Button'
+import { Pagination } from '../../components/Pagination'
 import { listCards } from '../../server/listCards'
 
+const PAGE_SIZE = 24
+
+function asPage(value: unknown): number {
+  const page = Number(value)
+  return Number.isInteger(page) && page >= 0 ? page : 0
+}
+
 export const Route = createFileRoute('/admin/cards')({
-  loader: () => listCards(),
+  validateSearch: (search: Record<string, unknown>) => ({ page: asPage(search.page) }),
+  loaderDeps: ({ search }) => ({ page: search.page }),
+  loader: ({ deps }) => listCards({ data: { page: deps.page } }),
   head: () => ({
     meta: [{ title: 'All cards - Spells' }],
   }),
@@ -12,13 +22,14 @@ export const Route = createFileRoute('/admin/cards')({
 })
 
 function AdminCardsRoute() {
-  const cards = Route.useLoaderData()
+  const { cards, total } = Route.useLoaderData()
+  const { page } = Route.useSearch()
 
   return (
     <div className="library-page">
       <div className="library-header">
         <Button to="/">Library</Button>
-        <h1>All cards ({cards.length})</h1>
+        <h1>All cards ({total})</h1>
       </div>
       <div className="library-content">
         {cards.length === 0 ? (
@@ -48,6 +59,7 @@ function AdminCardsRoute() {
             ))}
           </ul>
         )}
+        <Pagination page={page} pageSize={PAGE_SIZE} total={total} />
       </div>
     </div>
   )

@@ -77,9 +77,12 @@ export function upsertDeck(deck: Deck): void {
     .run(deck.publicId, deck.editId, deck.id, deck.title, now, now)
 }
 
-export function listSavedDecks(): SavedDeck[] {
-  const rows = getDb().prepare('SELECT * FROM decks ORDER BY updatedAt DESC').all() as unknown as DeckRow[]
-  return rows.map(rowToDeck)
+export function listSavedDecks(page = 0, pageSize = 24): { decks: SavedDeck[]; total: number } {
+  const rows = getDb()
+    .prepare('SELECT * FROM decks ORDER BY updatedAt DESC LIMIT ? OFFSET ?')
+    .all(pageSize, page * pageSize) as unknown as DeckRow[]
+  const { count } = getDb().prepare('SELECT COUNT(*) AS count FROM decks').get() as unknown as { count: number }
+  return { decks: rows.map(rowToDeck), total: count }
 }
 
 export function getDeckByPublicId(publicId: string): SavedDeck | null {
