@@ -35,12 +35,14 @@ function AdminCardsRoute() {
                 >
                   <CardPreview card={card} />
                 </Link>
-                <div className="library-grid-item-footer">
+                <div className="library-grid-item-footer library-grid-item-footer-stacked">
                   <span>{card.title || 'Untitled'}</span>
-                  <span>{new Date(card.updatedAt).toLocaleString()}</span>
-                  <Link to="/edit/$id" params={{ id: card.id }}>
-                    Edit
-                  </Link>
+                  <div className="library-grid-item-meta">
+                    <span>{new Date(card.updatedAt).toLocaleString()}</span>
+                    <Link to="/edit/$id" params={{ id: card.id }}>
+                      Edit
+                    </Link>
+                  </div>
                 </div>
               </li>
             ))}
