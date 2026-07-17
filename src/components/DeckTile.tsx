@@ -19,7 +19,6 @@ export function DeckTile({ deck, previewCards, onDelete }: DeckTileProps) {
         params={{ id: deck.publicId }}
         className="library-grid-item-preview deck-stack"
         title={`View ${deck.title || 'Untitled deck'}`}
-        style={{ viewTransitionName: `deck-${deck.publicId}` }}
       >
         {previewCards.length === 0 ? (
           <div className="deck-stack-empty">No cards yet</div>
@@ -30,7 +29,7 @@ export function DeckTile({ deck, previewCards, onDelete }: DeckTileProps) {
               className="deck-stack-card"
               style={{ '--fan-i': i - (arr.length - 1) / 2 } as CSSProperties}
             >
-              <CardPreview card={card} />
+              <CardPreview card={card} transitionName={`deck-${deck.publicId}-card-${card.publicId}`} />
             </div>
           ))
         )}
