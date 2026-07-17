@@ -1,14 +1,22 @@
 import { create } from 'zustand'
 import type { Deck } from '../types/deck'
 import { createBlankDeck } from '../types/deck'
+import type { SavedCard } from '../server/cardsDb'
 import { loadDeckLibrary, saveDeckLibrary } from './persistence'
 import { saveDeck } from '../server/saveDeck'
 import { addCardToDeck as addCardToDeckServerFn } from '../server/addCardToDeck'
 import { renameDeck as renameDeckServerFn } from '../server/renameDeck'
+import { listDeckCardPreviews } from '../server/listDeckCardPreviews'
 
 interface DeckStoreState {
   deckLibrary: Deck[]
+  // Kept in the store (rather than component state) so it survives Gallery
+  // unmounting/remounting on navigation — without this, returning to the
+  // library after viewing a deck would briefly render empty fan previews,
+  // missing the view-transition snapshot they need to morph from.
+  deckPreviews: Record<string, SavedCard[]>
   hydrateDecksFromStorage: () => void
+  loadDeckPreviews: (deckPublicIds: string[]) => Promise<void>
   createDeck: (title: string) => Promise<Deck | null>
   addCardToDeck: (deckEditId: string, cardPublicId: string) => Promise<void>
   renameDeck: (editId: string, title: string) => Promise<void>
@@ -17,9 +25,15 @@ interface DeckStoreState {
 
 export const useDeckStore = create<DeckStoreState>((set, get) => ({
   deckLibrary: [],
+  deckPreviews: {},
 
   hydrateDecksFromStorage: () => {
     set({ deckLibrary: loadDeckLibrary() })
+  },
+
+  loadDeckPreviews: async (deckPublicIds) => {
+    const previews = await listDeckCardPreviews({ data: { deckPublicIds } })
+    set({ deckPreviews: { ...get().deckPreviews, ...previews } })
   },
 
   createDeck: async (title) => {

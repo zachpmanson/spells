@@ -3,8 +3,6 @@ import { useEffect, useState } from 'react';
 import { useCardStore } from '../lib/cardStore';
 import { useDeckStore } from '../lib/deckStore';
 import { getSavedCardIds } from '../server/listSavedCardIds';
-import { listDeckCardPreviews } from '../server/listDeckCardPreviews';
-import type { SavedCard } from '../server/cardsDb';
 import { Button } from './Button';
 import { DeckTile } from './DeckTile';
 import { CardTile } from './CardTile';
@@ -14,11 +12,12 @@ export function Gallery() {
   const library = useCardStore((s) => s.library)
   const deleteFromLibrary = useCardStore((s) => s.deleteFromLibrary)
   const deckLibrary = useDeckStore((s) => s.deckLibrary)
+  const deckPreviews = useDeckStore((s) => s.deckPreviews)
   const hydrateDecksFromStorage = useDeckStore((s) => s.hydrateDecksFromStorage)
+  const loadDeckPreviews = useDeckStore((s) => s.loadDeckPreviews)
   const createDeck = useDeckStore((s) => s.createDeck)
   const deleteDeckFromLibrary = useDeckStore((s) => s.deleteDeckFromLibrary)
   const [savedIds, setSavedIds] = useState<Set<string> | null>(null)
-  const [deckPreviews, setDeckPreviews] = useState<Record<string, SavedCard[]>>({})
 
   useEffect(() => {
     getSavedCardIds()
@@ -32,10 +31,10 @@ export function Gallery() {
 
   useEffect(() => {
     if (deckLibrary.length === 0) return
-    listDeckCardPreviews({ data: { deckPublicIds: deckLibrary.map((d) => d.publicId) } })
-      .then(setDeckPreviews)
-      .catch((err) => console.error('Failed to load deck previews:', err))
-  }, [deckLibrary])
+    loadDeckPreviews(deckLibrary.map((d) => d.publicId)).catch((err) =>
+      console.error('Failed to load deck previews:', err),
+    )
+  }, [deckLibrary, loadDeckPreviews])
 
   async function handleNewDeck() {
     const title = window.prompt('Deck name:')
