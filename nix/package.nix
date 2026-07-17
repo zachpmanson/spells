@@ -6,7 +6,7 @@ let
     version = "0.0.0";
     src = ../.;
     fetcherVersion = 3;
-    hash = "sha256-7D+5CK/drgXvTldrubSscNRhFI06IXlRVxC0J7W5jv8=";
+    hash = "";
   };
 in
 
