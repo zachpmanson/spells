@@ -82,7 +82,9 @@ function CardViewRoute() {
   return (
     <div className="card-view-page">
       <div className="toolbar">
-        <Button to="/" style={{ viewTransitionName: 'library-title' }}>Library</Button>
+        <Button to="/">
+          <span style={{ viewTransitionName: 'library-title' }}>Library</span>
+        </Button>
         {card && (
           <>
             <span className="card-view-title">{card.title || 'Untitled'}</span>
