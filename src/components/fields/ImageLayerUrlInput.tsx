@@ -9,6 +9,7 @@ export function ImageLayerUrlInput({ value, onChange, onSubmit }: ImageLayerUrlI
     <div className="image-layer-url-input">
       <input
         type="text"
+        autoFocus
         placeholder="https://example.com/image.png"
         value={value}
         onChange={(e) => onChange(e.target.value)}
