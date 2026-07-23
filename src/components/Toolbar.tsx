@@ -25,8 +25,8 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
     }
   }, [])
 
-  function handleSaveToLibrary() {
-    const saved = saveToLibrary()
+  async function handleSaveToLibrary() {
+    const saved = await saveToLibrary()
     if (!saved) return
     const publicId = useCardStore.getState().card.publicId
     // Reset the in-memory card and its persisted cache to blank so a later
@@ -36,7 +36,7 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
   }
 
   async function handleCopyShareLink() {
-    const publicId = card.publicId ?? (saveToLibrary() ? useCardStore.getState().card.publicId : null)
+    const publicId = card.publicId ?? ((await saveToLibrary()) ? useCardStore.getState().card.publicId : null)
     if (!publicId) return
     await navigator.clipboard.writeText(`${window.location.origin}/card/${publicId}`)
     setJustCopied(true)

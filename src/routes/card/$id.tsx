@@ -58,7 +58,7 @@ function CardViewRoute() {
   const ownedCard = hydrated ? library.find((c) => c.publicId === id) : undefined
   const memberDecks = deckLibrary.filter((d) => memberDeckIds.has(d.publicId))
 
-  function handleFork() {
+  async function handleFork() {
     if (!card) return
     const forked: Card = {
       id: crypto.randomUUID(),
@@ -75,7 +75,7 @@ function CardViewRoute() {
       coverImage: card.coverImage,
     }
     loadCard(forked)
-    saveToLibrary()
+    await saveToLibrary()
     navigate({ to: '/edit/$id', params: { id: forked.editId } })
   }
 

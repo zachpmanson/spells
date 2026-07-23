@@ -23,7 +23,7 @@ interface CardStoreState {
   loadCard: (card: Card) => void
   loadCardByEditId: (editId: string) => boolean
   loadCardFromServer: (card: Card) => void
-  saveToLibrary: () => boolean
+  saveToLibrary: () => Promise<boolean>
   deleteFromLibrary: (id: string) => void
   importCards: (cards: Card[]) => void
   hydrateFromStorage: () => void
@@ -149,7 +149,7 @@ export const useCardStore = create<CardStoreState>((set, get) => ({
     set({ card, library: nextLibrary, past: [], future: [] })
   },
 
-  saveToLibrary: () => {
+  saveToLibrary: async () => {
     const { card, library } = get()
     const cardToSave: Card = card.publicId ? card : { ...card, publicId: crypto.randomUUID() }
     const existingIndex = library.findIndex((c) => c.id === cardToSave.id)
@@ -163,10 +163,12 @@ export const useCardStore = create<CardStoreState>((set, get) => ({
     }
     persist(cardToSave)
     set({ card: cardToSave, library: nextLibrary })
-    saveCard({ data: cardToSave }).catch((err) => {
+    try {
+      await saveCard({ data: cardToSave })
+    } catch (err) {
       console.error('Failed to record card server-side:', err)
       window.alert('Could not sync this card to the server — it may belong to someone else.')
-    })
+    }
     return true
   },
 
