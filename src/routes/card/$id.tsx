@@ -69,6 +69,9 @@ function CardViewRoute() {
       .catch((err) => console.error('Failed to check deck membership:', err))
   }, [hydrated, deckLibrary, id])
 
+  const ownedCard = hydrated ? library.find((c) => c.publicId === id) : undefined
+  const memberDecks = deckLibrary.filter((d) => memberDeckIds.has(d.publicId))
+
   // Backfill: render the OpenGraph preview for owned cards that don't have one
   // yet (e.g. saved before the feature). Ownership is enforced by saveCard's
   // server-side editId check, so we only ever touch cards in our own library.
@@ -90,9 +93,6 @@ function CardViewRoute() {
       cancelled = true
     }
   }, [card, ownedCard])
-
-  const ownedCard = hydrated ? library.find((c) => c.publicId === id) : undefined
-  const memberDecks = deckLibrary.filter((d) => memberDeckIds.has(d.publicId))
 
   async function handleFork() {
     if (!card) return
