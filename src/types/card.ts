@@ -42,6 +42,9 @@ export interface Card {
   showFlavorText: boolean
   powerToughness: string
   coverImage: CoverImage | null
+  // Path to a server-stored PNG of the rendered card, used as the
+  // OpenGraph/twitter preview image for shared /card/<uuid> links.
+  ogImage?: string | null
 }
 
 export function createBlankCard(templateId: string): Card {
@@ -58,5 +61,6 @@ export function createBlankCard(templateId: string): Card {
     showFlavorText: true,
     powerToughness: '1/1',
     coverImage: null,
+    ogImage: null,
   }
 }

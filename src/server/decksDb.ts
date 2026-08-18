@@ -114,6 +114,7 @@ interface CardJoinRow {
   showFlavorText: number
   powerToughness: string
   coverImage: string | null
+  ogImage: string | null
   createdAt: string
   updatedAt: string
 }
@@ -132,6 +133,7 @@ function rowToSavedCard(row: CardJoinRow): SavedCard {
     showFlavorText: Boolean(row.showFlavorText),
     powerToughness: row.powerToughness,
     coverImage: row.coverImage ? JSON.parse(row.coverImage) : null,
+    ogImage: row.ogImage ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }

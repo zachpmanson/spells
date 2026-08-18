@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useCardStore } from '../lib/cardStore'
 import { exportCardAsJson, importCardsFromFile } from '../lib/persistence'
-import { exportCardCanvasAsPng } from '../lib/export'
+import { exportCardCanvasAsPng, generateCardOgImage } from '../lib/export'
 import { Button } from './Button'
 
 interface ToolbarProps {
@@ -26,6 +26,12 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
   }, [])
 
   async function handleSaveToLibrary() {
+    // Refresh the OpenGraph preview from the current canvas so the shared link
+    // always shows the card as saved. Best-effort: failure just means no image.
+    if (canvasRef.current) {
+      const ogImage = await generateCardOgImage(canvasRef.current)
+      if (ogImage) useCardStore.setState((s) => ({ card: { ...s.card, ogImage } }))
+    }
     const saved = await saveToLibrary()
     if (!saved) return
     const publicId = useCardStore.getState().card.publicId
@@ -36,7 +42,15 @@ export function Toolbar({ canvasRef, onOpenModelSettings }: ToolbarProps) {
   }
 
   async function handleCopyShareLink() {
-    const publicId = card.publicId ?? ((await saveToLibrary()) ? useCardStore.getState().card.publicId : null)
+    // Only generate if missing (e.g. a card from before the og-image feature
+    // that's being shared without an explicit "Save to library").
+    if (canvasRef.current && !card.ogImage) {
+      const ogImage = await generateCardOgImage(canvasRef.current)
+      if (ogImage) useCardStore.setState((s) => ({ card: { ...s.card, ogImage } }))
+    }
+    const cardWithOg = useCardStore.getState().card
+    const publicId =
+      cardWithOg.publicId ?? ((await saveToLibrary()) ? useCardStore.getState().card.publicId : null)
     if (!publicId) return
     await navigator.clipboard.writeText(`${window.location.origin}/card/${publicId}`)
     setJustCopied(true)

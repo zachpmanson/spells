@@ -69,6 +69,14 @@ function migrateAddEditId(instance: DatabaseSync): void {
   `)
 }
 
+// Pre-dates the ogImage preview column — a tiny ALTER is all that's needed.
+function migrateAddOgImage(instance: DatabaseSync): void {
+  const columns = instance.prepare('PRAGMA table_info(cards)').all() as unknown as Array<{ name: string }>
+  if (columns.length === 0 || columns.some((c) => c.name === 'ogImage')) return
+
+  instance.exec('ALTER TABLE cards ADD COLUMN ogImage TEXT')
+}
+
 function getDb(): DatabaseSync {
   if (db) return db
 
@@ -88,12 +96,14 @@ function getDb(): DatabaseSync {
       showFlavorText INTEGER NOT NULL,
       powerToughness TEXT NOT NULL,
       coverImage TEXT,
+      ogImage TEXT,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
     )
   `)
   migrateLegacyIdPrimaryKey(db)
   migrateAddEditId(db)
+  migrateAddOgImage(db)
   return db
 }
 
@@ -110,6 +120,7 @@ interface CardRow {
   showFlavorText: number
   powerToughness: string
   coverImage: string | null
+  ogImage: string | null
   createdAt: string
   updatedAt: string
 }
@@ -128,6 +139,7 @@ function rowToCard(row: CardRow): SavedCard {
     showFlavorText: Boolean(row.showFlavorText),
     powerToughness: row.powerToughness,
     coverImage: row.coverImage ? JSON.parse(row.coverImage) : null,
+    ogImage: row.ogImage ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }
@@ -142,8 +154,8 @@ export function upsertSavedCard(card: Card): void {
   const now = new Date().toISOString()
   getDb()
     .prepare(`
-      INSERT INTO cards (publicId, editId, id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO cards (publicId, editId, id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, ogImage, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(publicId) DO UPDATE SET
         id = excluded.id,
         templateId = excluded.templateId,
@@ -155,6 +167,7 @@ export function upsertSavedCard(card: Card): void {
         showFlavorText = excluded.showFlavorText,
         powerToughness = excluded.powerToughness,
         coverImage = excluded.coverImage,
+        ogImage = excluded.ogImage,
         updatedAt = excluded.updatedAt
     `)
     .run(
@@ -170,6 +183,7 @@ export function upsertSavedCard(card: Card): void {
       card.showFlavorText ? 1 : 0,
       card.powerToughness,
       card.coverImage ? JSON.stringify(card.coverImage) : null,
+      card.ogImage ?? null,
       now,
       now,
     )

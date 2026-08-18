@@ -7,8 +7,10 @@ import { useCardStore } from '../../lib/cardStore'
 import { useDeckStore } from '../../lib/deckStore'
 import { getCard } from '../../server/getCard'
 import { listDecksContainingCard } from '../../server/listDecksContainingCard'
-import { exportCardCanvasAsPng } from '../../lib/export'
+import { exportCardCanvasAsPng, generateCardOgImage } from '../../lib/export'
 import { exportCardAsJson } from '../../lib/persistence'
+import { saveCard } from '../../server/saveCard'
+import { PUBLIC_ORIGIN } from '../../lib/origin'
 import type { Card } from '../../types/card'
 
 // Ephemeral navigation context (carried via router location state, not the
@@ -21,7 +23,19 @@ export interface CardNavState {
 export const Route = createFileRoute('/card/$id')({
   loader: ({ params }) => getCard({ data: { publicId: params.id } }),
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.title ? `${loaderData.title} - Spells` : 'Spells' }],
+    meta: [
+      { title: loaderData?.title ? `${loaderData.title} - Spells` : 'Spells' },
+      // OpenGraph/twitter preview so shared card links embed the card image.
+      ...(loaderData?.ogImage
+        ? [
+            { property: 'og:title', content: loaderData.title || 'Spells card' },
+            { property: 'og:type', content: 'website' },
+            { property: 'og:image', content: `${PUBLIC_ORIGIN}${loaderData.ogImage}` },
+            { name: 'twitter:card', content: 'summary_large_image' },
+            { name: 'twitter:image', content: `${PUBLIC_ORIGIN}${loaderData.ogImage}` },
+          ]
+        : []),
+    ],
   }),
   component: CardViewRoute,
 })
@@ -54,6 +68,28 @@ function CardViewRoute() {
       .then((ids) => setMemberDeckIds(new Set(ids)))
       .catch((err) => console.error('Failed to check deck membership:', err))
   }, [hydrated, deckLibrary, id])
+
+  // Backfill: render the OpenGraph preview for owned cards that don't have one
+  // yet (e.g. saved before the feature). Ownership is enforced by saveCard's
+  // server-side editId check, so we only ever touch cards in our own library.
+  useEffect(() => {
+    if (!card || !ownedCard || ownedCard.ogImage || !previewRef.current) return
+    let cancelled = false
+    ;(async () => {
+      const ogImage = await generateCardOgImage(previewRef.current!)
+      if (cancelled || !ogImage) return
+      const updated = { ...ownedCard, ogImage }
+      useCardStore.getState().importCards([updated])
+      try {
+        await saveCard({ data: updated })
+      } catch (err) {
+        console.error('Failed to save card preview image:', err)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [card, ownedCard])
 
   const ownedCard = hydrated ? library.find((c) => c.publicId === id) : undefined
   const memberDecks = deckLibrary.filter((d) => memberDeckIds.has(d.publicId))
