@@ -753,3 +753,70 @@ body {
   font-size: 0.85rem;
   line-height: 1.5;
 }
+
+/* Hidden off-screen deck cover rendered for OpenGraph previews (1200x630 to
+   match the standard OG canvas; see generateDeckOgImage). Sized and styled so
+   html-to-image captures a composed fan of the deck's cards + title. */
+.deck-og-cover {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 1200px;
+  height: 630px;
+  background: linear-gradient(135deg, #141414 0%, #251b33 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.deck-og-title {
+  color: #eee;
+  font-size: 46px;
+  font-weight: 700;
+  font-family: Georgia, serif;
+  letter-spacing: 0.02em;
+  max-width: 82%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-og-fan {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deck-og-card {
+  width: 172px;
+  flex: none;
+  margin: 0 -26px;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.65));
+}
+
+.deck-og-card:nth-child(1) {
+  transform: rotate(-7deg) translateY(4px);
+  z-index: 1;
+}
+
+.deck-og-card:nth-child(2) {
+  transform: rotate(0deg);
+  z-index: 3;
+}
+
+.deck-og-card:nth-child(3) {
+  transform: rotate(7deg) translateY(4px);
+  z-index: 2;
+}
+
+.deck-og-more {
+  color: #c3b2e0;
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: -6px;
+}

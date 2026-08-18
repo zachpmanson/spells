@@ -22,6 +22,7 @@ interface DeckStoreState {
   createDeck: (title: string) => Promise<Deck | null>
   forkDeck: (publicId: string) => Promise<Deck | null>
   adoptDeck: (deck: Deck) => void
+  setDeckOgImage: (publicId: string, ogImage: string) => void
   addCardToDeck: (deckEditId: string, cardPublicId: string) => Promise<void>
   renameDeck: (editId: string, title: string) => Promise<void>
   deleteDeckFromLibrary: (id: string) => void
@@ -88,6 +89,13 @@ export const useDeckStore = create<DeckStoreState>((set, get) => ({
       window.alert('Could not save the deck to your collection: browser storage is full.')
       return
     }
+    set({ deckLibrary: nextLibrary })
+  },
+
+  // Records a generated OG cover path on a deck in the local collection.
+  setDeckOgImage: (publicId, ogImage) => {
+    const nextLibrary = get().deckLibrary.map((d) => (d.publicId === publicId ? { ...d, ogImage } : d))
+    saveDeckLibrary(nextLibrary)
     set({ deckLibrary: nextLibrary })
   },
 

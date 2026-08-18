@@ -4,12 +4,33 @@ import { CardPreview } from '../../components/CardPreview'
 import { Button } from '../../components/Button'
 import { useDeckStore } from '../../lib/deckStore'
 import { getDeck } from '../../server/getDeck'
+import { saveDeck } from '../../server/saveDeck'
+import { generateDeckOgImage } from '../../lib/export'
+import { PUBLIC_ORIGIN } from '../../lib/origin'
 import type { CardNavState } from '../card/$id'
 
 export const Route = createFileRoute('/deck/$id')({
   loader: ({ params }) => getDeck({ data: { publicId: params.id } }),
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.deck.title ? `${loaderData.deck.title} - Spells` : 'Spells' }],
+    meta: [
+      { title: loaderData?.deck.title ? `${loaderData.deck.title} - Spells` : 'Spells' },
+      ...(loaderData
+        ? [
+            { property: 'og:locale', content: 'en_AU' },
+            { property: 'og:url', content: `${PUBLIC_ORIGIN}/deck/${loaderData.deck.publicId}` },
+          ]
+        : []),
+      // OpenGraph/twitter preview so shared deck links embed a deck cover.
+      ...(loaderData?.deck.ogImage
+        ? [
+            { property: 'og:title', content: loaderData.deck.title || 'Spells deck' },
+            { property: 'og:type', content: 'website' },
+            { property: 'og:image', content: `${PUBLIC_ORIGIN}${loaderData.deck.ogImage}` },
+            { name: 'twitter:card', content: 'summary_large_image' },
+            { name: 'twitter:image', content: `${PUBLIC_ORIGIN}${loaderData.deck.ogImage}` },
+          ]
+        : []),
+    ],
   }),
   component: DeckViewRoute,
 })
@@ -20,9 +41,11 @@ function DeckViewRoute() {
   const hydrateDecksFromStorage = useDeckStore((s) => s.hydrateDecksFromStorage)
   const deckLibrary = useDeckStore((s) => s.deckLibrary)
   const adoptDeck = useDeckStore((s) => s.adoptDeck)
+  const setDeckOgImage = useDeckStore((s) => s.setDeckOgImage)
   const [hydrated, setHydrated] = useState(false)
   const [shareJustCopied, setShareJustCopied] = useState(false)
   const shareCopiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const deckOgRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     hydrateDecksFromStorage()
@@ -52,6 +75,31 @@ function DeckViewRoute() {
   const navigate = useNavigate()
   const forkDeck = useDeckStore((s) => s.forkDeck)
   const [forking, setForking] = useState(false)
+
+  // Backfill: generate an OG deck cover for owned decks that don't have one yet
+  // (e.g. created before the feature). Gated on ownership (real editId) so we
+  // never render/save a cover for a deck we don't own, and it needs cards to
+  // show anything meaningful.
+  useEffect(() => {
+    if (!hydrated || !ownedDeck || ownedDeck.ogImage || !data || data.cards.length === 0) return
+    if (!deckOgRef.current) return
+    let cancelled = false
+    ;(async () => {
+      const ogImage = await generateDeckOgImage(deckOgRef.current!)
+      if (cancelled || !ogImage) return
+      setDeckOgImage(ownedDeck.publicId, ogImage)
+      try {
+        await saveDeck({ data: { ...ownedDeck, ogImage } })
+      } catch (err) {
+        console.error('Failed to save deck preview image:', err)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // setDeckOgImage is a stable zustand action — no need to re-run on it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, ownedDeck, data])
 
   async function handleFork() {
     if (!data || forking) return
@@ -125,6 +173,22 @@ function DeckViewRoute() {
               </li>
             ))}
           </ul>
+        )}
+      </div>
+      {/* Hidden, off-screen deck cover used to render the OpenGraph preview
+          image (see generateDeckOgImage). Kept out of view; only meaningful
+          when the deck has cards. */}
+      <div ref={deckOgRef} className="deck-og-cover" aria-hidden>
+        <div className="deck-og-title">{data?.deck.title || 'Untitled deck'}</div>
+        <div className="deck-og-fan">
+          {(data?.cards ?? []).slice(0, 3).map((card) => (
+            <div className="deck-og-card" key={card.publicId}>
+              <CardPreview card={card} />
+            </div>
+          ))}
+        </div>
+        {(data?.cards.length ?? 0) > 3 && (
+          <div className="deck-og-more">+{(data?.cards.length ?? 0) - 3} more</div>
         )}
       </div>
     </div>

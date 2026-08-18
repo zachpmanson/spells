@@ -57,3 +57,27 @@ export async function generateCardOgImage(node: HTMLElement): Promise<string | n
     return null
   }
 }
+
+// Renders a deck cover node (a hidden 1200x630 "deck-og-cover" element with the
+// deck title + a fan of card previews) to a PNG and uploads it, returning the
+// served path used as the OpenGraph/twitter preview for /deck/<uuid> links.
+// Returns null on failure so callers can fall back gracefully (no og meta).
+export async function generateDeckOgImage(node: HTMLElement): Promise<string | null> {
+  try {
+    await document.fonts.ready
+    const image = await loadImage(await toPng(node, { pixelRatio: 2 }))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = OG_IMAGE_WIDTH
+    canvas.height = OG_IMAGE_HEIGHT
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+
+    ctx.drawImage(image, 0, 0, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT)
+    const { url } = await uploadImage({ data: { dataUrl: canvas.toDataURL('image/png') } })
+    return url
+  } catch (err) {
+    console.error('Failed to generate deck preview image:', err)
+    return null
+  }
+}

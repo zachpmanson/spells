@@ -8,6 +8,13 @@ import { redactEditId } from './cardsDb'
 
 let db: DatabaseSync | null = null
 
+// Pre-dates the ogImage deck-cover column — a tiny ALTER is all that's needed.
+function migrateAddDeckOgImage(instance: DatabaseSync): void {
+  const columns = instance.prepare('PRAGMA table_info(decks)').all() as unknown as Array<{ name: string }>
+  if (columns.length === 0 || columns.some((c) => c.name === 'ogImage')) return
+  instance.exec('ALTER TABLE decks ADD COLUMN ogImage TEXT')
+}
+
 function getDb(): DatabaseSync {
   if (db) return db
 
@@ -21,6 +28,7 @@ function getDb(): DatabaseSync {
       editId TEXT NOT NULL UNIQUE,
       id TEXT NOT NULL,
       title TEXT NOT NULL,
+      ogImage TEXT,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
     )
@@ -33,6 +41,7 @@ function getDb(): DatabaseSync {
       PRIMARY KEY (deckPublicId, cardPublicId)
     )
   `)
+  migrateAddDeckOgImage(db)
   return db
 }
 
@@ -41,6 +50,7 @@ interface DeckRow {
   editId: string
   id: string
   title: string
+  ogImage: string | null
   createdAt: string
   updatedAt: string
 }
@@ -53,6 +63,7 @@ function rowToDeck(row: DeckRow): SavedDeck {
     publicId: row.publicId,
     editId: row.editId,
     title: row.title,
+    ogImage: row.ogImage ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }
@@ -68,13 +79,14 @@ export function upsertDeck(deck: Deck): void {
   const now = new Date().toISOString()
   getDb()
     .prepare(`
-      INSERT INTO decks (publicId, editId, id, title, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO decks (publicId, editId, id, title, ogImage, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(publicId) DO UPDATE SET
         title = excluded.title,
+        ogImage = excluded.ogImage,
         updatedAt = excluded.updatedAt
     `)
-    .run(deck.publicId, deck.editId, deck.id, deck.title, now, now)
+    .run(deck.publicId, deck.editId, deck.id, deck.title, deck.ogImage ?? null, now, now)
 }
 
 export function listSavedDecks(page = 0, pageSize = 24): { decks: SavedDeck[]; total: number } {
