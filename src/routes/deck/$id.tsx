@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { CardPreview } from '../../components/CardPreview'
 import { Button } from '../../components/Button'
@@ -27,6 +27,23 @@ function DeckViewRoute() {
   }, [hydrateDecksFromStorage])
 
   const ownedDeck = hydrated ? deckLibrary.find((d) => d.publicId === id) : undefined
+  const navigate = useNavigate()
+  const forkDeck = useDeckStore((s) => s.forkDeck)
+  const [forking, setForking] = useState(false)
+
+  async function handleFork() {
+    if (!data || forking) return
+    setForking(true)
+    try {
+      const deck = await forkDeck(data.deck.publicId)
+      if (deck) navigate({ to: '/deck/edit/$id', params: { id: deck.editId } })
+    } catch (err) {
+      console.error('Failed to fork deck:', err)
+      window.alert('Could not fork this deck.')
+    } finally {
+      setForking(false)
+    }
+  }
 
   return (
     <div className="library-page">
@@ -35,10 +52,17 @@ function DeckViewRoute() {
           <span style={{ viewTransitionName: 'library-title' }}>Library</span>
         </Button>
         {data && <h1>{data.deck.title || 'Untitled deck'}</h1>}
-        {ownedDeck && (
-          <Button className="toolbar-spacer-btn" to="/deck/edit/$id" params={{ id: ownedDeck.editId }}>
-            Edit
-          </Button>
+        {data && (
+          <div className="library-header-actions">
+            <Button onClick={handleFork} disabled={forking}>
+              {forking ? 'Forking…' : 'Fork'}
+            </Button>
+            {ownedDeck && (
+              <Button to="/deck/edit/$id" params={{ id: ownedDeck.editId }}>
+                Edit
+              </Button>
+            )}
+          </div>
         )}
       </div>
       <div className="library-content">

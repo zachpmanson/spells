@@ -7,6 +7,8 @@ import { saveDeck } from '../server/saveDeck'
 import { addCardToDeck as addCardToDeckServerFn } from '../server/addCardToDeck'
 import { renameDeck as renameDeckServerFn } from '../server/renameDeck'
 import { listDeckCardPreviews } from '../server/listDeckCardPreviews'
+import { forkDeck as forkDeckServerFn } from '../server/forkDeck'
+import { useCardStore } from './cardStore'
 
 interface DeckStoreState {
   deckLibrary: Deck[]
@@ -18,6 +20,7 @@ interface DeckStoreState {
   hydrateDecksFromStorage: () => void
   loadDeckPreviews: (deckPublicIds: string[]) => Promise<void>
   createDeck: (title: string) => Promise<Deck | null>
+  forkDeck: (publicId: string) => Promise<Deck | null>
   addCardToDeck: (deckEditId: string, cardPublicId: string) => Promise<void>
   renameDeck: (editId: string, title: string) => Promise<void>
   deleteDeckFromLibrary: (id: string) => void
@@ -47,6 +50,21 @@ export const useDeckStore = create<DeckStoreState>((set, get) => ({
     // Awaited so callers can rely on the deck existing server-side immediately
     // afterwards (e.g. adding a card to it in the same action).
     await saveDeck({ data: deck })
+    return deck
+  },
+
+  // Duplicates a deck (server-side, with fresh card identities) and adopts the
+  // result into this browser's collection — forked cards into the card library,
+  // the new deck into the deck library — mirroring the single-card Fork flow.
+  forkDeck: async (publicId) => {
+    const { deck, cards } = await forkDeckServerFn({ data: { publicId } })
+    useCardStore.getState().importCards(cards)
+    const nextLibrary = [...get().deckLibrary, deck]
+    if (!saveDeckLibrary(nextLibrary)) {
+      window.alert('Could not save the forked deck: browser storage is full.')
+      return null
+    }
+    set({ deckLibrary: nextLibrary })
     return deck
   },
 
