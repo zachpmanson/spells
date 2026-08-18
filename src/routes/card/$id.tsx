@@ -25,6 +25,23 @@ export const Route = createFileRoute('/card/$id')({
   head: ({ loaderData }) => ({
     meta: [
       { title: loaderData?.title ? `${loaderData.title} - Spells` : 'Spells' },
+      // Card flavour text becomes the page/metadata description.
+      ...(loaderData
+        ? [
+            {
+              name: 'description',
+              content: loaderData.flavorText.trim() || loaderData.typeLine || loaderData.title || 'A custom card made with Spells',
+            },
+            {
+              property: 'og:description',
+              content: loaderData.flavorText.trim() || loaderData.typeLine || loaderData.title || 'A custom card made with Spells',
+            },
+            {
+              name: 'twitter:description',
+              content: loaderData.flavorText.trim() || loaderData.typeLine || loaderData.title || 'A custom card made with Spells',
+            },
+          ]
+        : []),
       // OpenGraph/twitter preview so shared card links embed the card image.
       ...(loaderData?.ogImage
         ? [
