@@ -58,7 +58,14 @@ export const useDeckStore = create<DeckStoreState>((set, get) => ({
   // the new deck into the deck library — mirroring the single-card Fork flow.
   forkDeck: async (publicId) => {
     const { deck, cards } = await forkDeckServerFn({ data: { publicId } })
-    useCardStore.getState().importCards(cards)
+    // The card store isn't hydrated on the deck-view route (it's only hydrated
+    // on the library/editor routes), so a fresh page-load on a deck link leaves
+    // its in-memory library empty — merging against that would overwrite
+    // localStorage with only the forked cards and wipe existing saved cards.
+    // Hydrate first so the merge preserves the full library.
+    const cardStore = useCardStore.getState()
+    cardStore.hydrateFromStorage()
+    cardStore.importCards(cards)
     const nextLibrary = [...get().deckLibrary, deck]
     if (!saveDeckLibrary(nextLibrary)) {
       window.alert('Could not save the forked deck: browser storage is full.')
