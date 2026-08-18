@@ -188,11 +188,13 @@ function CardViewRoute() {
             <span className="card-view-title">{card.title || 'Untitled'}</span>
             <div className="card-view-actions toolbar-spacer-btn">
               {ownedCard && (
-                <Button to="/edit/$id" params={{ id: ownedCard.editId }}>
-                  Edit
-                </Button>
+                <>
+                  <Button to="/edit/$id" params={{ id: ownedCard.editId }}>
+                    Edit
+                  </Button>
+                  <Button onClick={handleCopyShareLink}>{shareJustCopied ? 'Copied ✓' : 'Copy Share Link'}</Button>
+                </>
               )}
-              <Button onClick={handleCopyShareLink}>{shareJustCopied ? 'Copied ✓' : 'Copy Share Link'}</Button>
               <Button onClick={handleFork}>Fork</Button>
               <AddToDeckSelect getCardPublicId={() => id} />
               <Button onClick={() => exportCardAsJson(card)}>Export JSON</Button>

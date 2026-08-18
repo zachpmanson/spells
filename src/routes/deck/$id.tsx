@@ -84,15 +84,17 @@ function DeckViewRoute() {
         {data && <h1>{data.deck.title || 'Untitled deck'}</h1>}
         {data && (
           <div className="library-header-actions">
-            <Button onClick={handleCopyShareLink}>{shareJustCopied ? 'Copied ✓' : 'Copy Share Link'}</Button>
+            {ownedDeck && (
+              <>
+                <Button onClick={handleCopyShareLink}>{shareJustCopied ? 'Copied ✓' : 'Copy Share Link'}</Button>
+                <Button to="/deck/edit/$id" params={{ id: ownedDeck.editId }}>
+                  Edit
+                </Button>
+              </>
+            )}
             <Button onClick={handleFork} disabled={forking}>
               {forking ? 'Forking…' : 'Fork'}
             </Button>
-            {ownedDeck && (
-              <Button to="/deck/edit/$id" params={{ id: ownedDeck.editId }}>
-                Edit
-              </Button>
-            )}
           </div>
         )}
       </div>
