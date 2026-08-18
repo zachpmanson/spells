@@ -488,14 +488,24 @@ body {
 .card-view-body {
   flex: 1;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  gap: 1.5rem;
   padding: 2rem 1.5rem;
 }
 
 .card-view-body p {
   color: #aaa;
   font-size: 0.9rem;
+}
+
+/* The canvas wrapper is `width: 100%` for the editor; as a flex item on the
+   card view it should size to its 500px cap so the skill body can sit beside
+   it (wrapping below on narrow viewports). */
+.card-view-body .app-canvas-wrapper {
+  flex: 0 1 500px;
+  width: auto;
 }
 
 .library-grid {
@@ -693,8 +703,9 @@ body {
 }
 
 .card-view-skill {
-  width: min(860px, calc(100% - 3rem));
-  margin: 0 auto 1.5rem;
+  flex: 1 1 420px;
+  min-width: 0;
+  max-width: 860px;
   background: #181818;
   border: 1px solid #333;
   border-radius: 6px;
@@ -702,12 +713,20 @@ body {
 }
 
 .card-view-skill summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   cursor: pointer;
   padding: 0.6rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
   color: #ccc;
   user-select: none;
+}
+
+.card-view-skill summary .btn {
+  flex: none;
 }
 
 .card-view-skill summary:hover {
@@ -725,7 +744,7 @@ body {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 40vh;
+  max-height: 60vh;
   overflow-y: auto;
 }
 

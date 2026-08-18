@@ -21,6 +21,7 @@ interface DeckStoreState {
   loadDeckPreviews: (deckPublicIds: string[]) => Promise<void>
   createDeck: (title: string) => Promise<Deck | null>
   forkDeck: (publicId: string) => Promise<Deck | null>
+  adoptDeck: (deck: Deck) => void
   addCardToDeck: (deckEditId: string, cardPublicId: string) => Promise<void>
   renameDeck: (editId: string, title: string) => Promise<void>
   deleteDeckFromLibrary: (id: string) => void
@@ -73,6 +74,21 @@ export const useDeckStore = create<DeckStoreState>((set, get) => ({
     }
     set({ deckLibrary: nextLibrary })
     return deck
+  },
+
+  // Adopts a shared deck (from a /deck/<uuid> link) into this browser's
+  // collection without forking it — it's added locally so it shows in the
+  // library, but it's not owned (read-only link carries a redacted editId), so
+  // the original stays untouched and deleting locally doesn't affect anyone.
+  adoptDeck: (deck) => {
+    const { deckLibrary } = get()
+    if (deckLibrary.some((d) => d.publicId === deck.publicId)) return
+    const nextLibrary = [...deckLibrary, deck]
+    if (!saveDeckLibrary(nextLibrary)) {
+      window.alert('Could not save the deck to your collection: browser storage is full.')
+      return
+    }
+    set({ deckLibrary: nextLibrary })
   },
 
   addCardToDeck: async (deckEditId, cardPublicId) => {

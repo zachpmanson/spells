@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CardPreview } from '../../components/CardPreview'
 import { Button } from '../../components/Button'
 import { useDeckStore } from '../../lib/deckStore'
@@ -19,14 +19,36 @@ function DeckViewRoute() {
   const data = Route.useLoaderData()
   const hydrateDecksFromStorage = useDeckStore((s) => s.hydrateDecksFromStorage)
   const deckLibrary = useDeckStore((s) => s.deckLibrary)
+  const adoptDeck = useDeckStore((s) => s.adoptDeck)
   const [hydrated, setHydrated] = useState(false)
+  const [shareJustCopied, setShareJustCopied] = useState(false)
+  const shareCopiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     hydrateDecksFromStorage()
     setHydrated(true)
   }, [hydrateDecksFromStorage])
 
-  const ownedDeck = hydrated ? deckLibrary.find((d) => d.publicId === id) : undefined
+  useEffect(() => {
+    return () => {
+      clearTimeout(shareCopiedTimeoutRef.current)
+    }
+  }, [])
+
+  // Adopt a shared deck into this browser's collection automatically (deduped
+  // by publicId). It stays a redacted copy — deleting it locally never touches
+  // the shared original.
+  useEffect(() => {
+    if (!hydrated || !data) return
+    if (deckLibrary.some((d) => d.publicId === data.deck.publicId)) return
+    adoptDeck(data.deck)
+  }, [hydrated, data, deckLibrary, adoptDeck])
+
+  // A deck you can actually edit: present in the local library AND holding the
+  // real editId. Adopted shared decks carry a redacted editId, so they're
+  // viewable/forkable but not editable.
+  const ownedDeck =
+    hydrated && data ? deckLibrary.find((d) => d.publicId === data.deck.publicId && Boolean(d.editId)) : undefined
   const navigate = useNavigate()
   const forkDeck = useDeckStore((s) => s.forkDeck)
   const [forking, setForking] = useState(false)
@@ -45,6 +67,14 @@ function DeckViewRoute() {
     }
   }
 
+  async function handleCopyShareLink() {
+    if (!data) return
+    await navigator.clipboard.writeText(`${window.location.origin}/deck/${data.deck.publicId}`)
+    setShareJustCopied(true)
+    clearTimeout(shareCopiedTimeoutRef.current)
+    shareCopiedTimeoutRef.current = setTimeout(() => setShareJustCopied(false), 2000)
+  }
+
   return (
     <div className="library-page">
       <div className="library-header">
@@ -54,6 +84,7 @@ function DeckViewRoute() {
         {data && <h1>{data.deck.title || 'Untitled deck'}</h1>}
         {data && (
           <div className="library-header-actions">
+            <Button onClick={handleCopyShareLink}>{shareJustCopied ? 'Copied ✓' : 'Copy Share Link'}</Button>
             <Button onClick={handleFork} disabled={forking}>
               {forking ? 'Forking…' : 'Fork'}
             </Button>

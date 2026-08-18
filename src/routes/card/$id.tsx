@@ -69,12 +69,21 @@ function CardViewRoute() {
   const hydrateFromStorage = useCardStore((s) => s.hydrateFromStorage)
   const loadCard = useCardStore((s) => s.loadCard)
   const saveToLibrary = useCardStore((s) => s.saveToLibrary)
+  const importCards = useCardStore((s) => s.importCards)
   const library = useCardStore((s) => s.library)
   const deckLibrary = useDeckStore((s) => s.deckLibrary)
   const hydrateDecksFromStorage = useDeckStore((s) => s.hydrateDecksFromStorage)
   const previewRef = useRef<HTMLDivElement>(null)
   const [hydrated, setHydrated] = useState(false)
   const [memberDeckIds, setMemberDeckIds] = useState<Set<string>>(new Set())
+  const [shareJustCopied, setShareJustCopied] = useState(false)
+  const shareCopiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(shareCopiedTimeoutRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     hydrateFromStorage()
@@ -89,7 +98,11 @@ function CardViewRoute() {
       .catch((err) => console.error('Failed to check deck membership:', err))
   }, [hydrated, deckLibrary, id])
 
-  const ownedCard = hydrated ? library.find((c) => c.publicId === id) : undefined
+  // A card you can actually edit: present in the local library AND holding the
+  // real editId. Shared cards adopted from a /card/<uuid> link carry a redacted
+  // editId, so they're viewable/forkable but not editable (and can't be
+  // re-saved server-side).
+  const ownedCard = hydrated ? library.find((c) => c.publicId === id && Boolean(c.editId)) : undefined
   const memberDecks = deckLibrary.filter((d) => memberDeckIds.has(d.publicId))
 
   // Backfill: render the OpenGraph preview for owned cards that don't have one
@@ -114,6 +127,23 @@ function CardViewRoute() {
     }
   }, [card, ownedCard])
 
+  // Adopt a shared card into this browser's collection automatically: visiting
+  // a share link adds it to localStorage (deduped by publicId). It stays a
+  // redacted copy — deleting it locally never touches the shared original.
+  useEffect(() => {
+    if (!hydrated || !card) return
+    if (library.some((c) => c.publicId === id)) return
+    importCards([card])
+  }, [hydrated, card, id, library, importCards])
+
+  async function handleCopyShareLink() {
+    if (!card) return
+    await navigator.clipboard.writeText(`${window.location.origin}/card/${card.publicId}`)
+    setShareJustCopied(true)
+    clearTimeout(shareCopiedTimeoutRef.current)
+    shareCopiedTimeoutRef.current = setTimeout(() => setShareJustCopied(false), 2000)
+  }
+
   async function handleFork() {
     if (!card) return
     const forked: Card = {
@@ -136,6 +166,17 @@ function CardViewRoute() {
     navigate({ to: '/edit/$id', params: { id: forked.editId } })
   }
 
+  function handleDownloadSkill() {
+    if (!card || !card.skillBody) return
+    const blob = new Blob([card.skillBody], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${card.title || 'card'}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="card-view-page">
       <div className="toolbar">
@@ -151,6 +192,7 @@ function CardViewRoute() {
                   Edit
                 </Button>
               )}
+              <Button onClick={handleCopyShareLink}>{shareJustCopied ? 'Copied ✓' : 'Copy Share Link'}</Button>
               <Button onClick={handleFork}>Fork</Button>
               <AddToDeckSelect getCardPublicId={() => id} />
               <Button onClick={() => exportCardAsJson(card)}>Export JSON</Button>
@@ -165,19 +207,26 @@ function CardViewRoute() {
       </div>
       <div className="card-view-body">
         {card ? (
-          <div className="app-canvas-wrapper">
-            <CardCanvas ref={previewRef} card={card} readOnly transitionName={transitionName} />
-          </div>
+          <>
+            <div className="app-canvas-wrapper">
+              <CardCanvas ref={previewRef} card={card} readOnly transitionName={transitionName} />
+            </div>
+            {card.skillBody.trim().length > 0 && (
+              <details className="card-view-skill" open>
+                <summary>
+                  <span>Skill body</span>
+                  <Button size="sm" onClick={(e) => { e.stopPropagation(); handleDownloadSkill() }}>
+                    Download
+                  </Button>
+                </summary>
+                <pre className="card-view-skill-text">{card.skillBody}</pre>
+              </details>
+            )}
+          </>
         ) : (
           <p>Card not found.</p>
         )}
       </div>
-      {card && card.skillBody.trim().length > 0 && (
-        <details className="card-view-skill" open>
-          <summary>Skill body</summary>
-          <pre className="card-view-skill-text">{card.skillBody}</pre>
-        </details>
-      )}
       {memberDecks.length > 0 && (
         <div className="card-view-decks">
           <span>In your decks:</span>
