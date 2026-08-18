@@ -12,8 +12,21 @@ export function CardFieldsPanel({ card }: CardFieldsPanelProps) {
   const setShowFlavorText = useCardStore((s) => s.setShowFlavorText)
   const skillFileInputRef = useRef<HTMLInputElement>(null)
 
-  async function handleSkillFile(file: File) {
-    updateField('skillBody', await file.text())
+  async function handleSkillFiles(files: FileList) {
+    // Concatenate the selected files into one skill body. SKILL.md always goes
+    // first (e.g. a skill release: SKILL.md + a python/bash/txt companion);
+    // the rest keep their original selection order.
+    const ordered = Array.from(files).sort((a, b) => {
+      const aScore = a.name.toLowerCase() === 'skill.md' ? 0 : 1
+      const bScore = b.name.toLowerCase() === 'skill.md' ? 0 : 1
+      return aScore - bScore
+    })
+    const parts: string[] = []
+    for (const file of ordered) {
+      const text = await file.text()
+      if (text.trim()) parts.push(text)
+    }
+    updateField('skillBody', parts.join('\n\n'))
   }
 
   return (
@@ -61,17 +74,17 @@ export function CardFieldsPanel({ card }: CardFieldsPanelProps) {
         <span className="flavor-text-label-row">
           Skill body
           <Button size="sm" onClick={() => skillFileInputRef.current?.click()}>
-            Load from file
+            Load files
           </Button>
           <input
             ref={skillFileInputRef}
             type="file"
-            accept=".txt,.md,.markdown,.text"
+            accept=".md,.markdown,.txt,.text,.py,.sh,.bash,.js,.ts,.json,.yaml,.yml,.toml"
+            multiple
             hidden
             onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) handleSkillFile(file)
-              // Reset so picking the same file again still fires onChange.
+              if (e.target.files && e.target.files.length > 0) handleSkillFiles(e.target.files)
+              // Reset so picking the same files again still fires onChange.
               e.target.value = ''
             }}
           />
@@ -81,7 +94,7 @@ export function CardFieldsPanel({ card }: CardFieldsPanelProps) {
           className="skill-body-textarea"
           value={card.skillBody}
           onChange={(e) => updateField('skillBody', e.target.value)}
-          placeholder="Paste the skill body here, or load it from a text file…"
+          placeholder="Paste the skill body here, or load files (SKILL.md + scripts)…"
         />
       </label>
     </div>
