@@ -28,6 +28,9 @@ export const Route = createFileRoute('/card/$id')({
       // Card flavour text becomes the page/metadata description.
       ...(loaderData
         ? [
+            { property: 'og:locale', content: 'en_AU' },
+            { property: 'og:url', content: `${PUBLIC_ORIGIN}/card/${loaderData.publicId}` },
+            { property: 'og:logo', content: `${PUBLIC_ORIGIN}/favicon.svg` },
             {
               name: 'description',
               content: loaderData.flavorText.trim() || loaderData.typeLine || loaderData.title || 'A custom card made with Spells',
