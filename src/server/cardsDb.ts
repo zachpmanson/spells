@@ -77,6 +77,14 @@ function migrateAddOgImage(instance: DatabaseSync): void {
   instance.exec('ALTER TABLE cards ADD COLUMN ogImage TEXT')
 }
 
+// Same pattern for the skillBody text-dump column.
+function migrateAddSkillBody(instance: DatabaseSync): void {
+  const columns = instance.prepare('PRAGMA table_info(cards)').all() as unknown as Array<{ name: string }>
+  if (columns.length === 0 || columns.some((c) => c.name === 'skillBody')) return
+
+  instance.exec('ALTER TABLE cards ADD COLUMN skillBody TEXT')
+}
+
 function getDb(): DatabaseSync {
   if (db) return db
 
@@ -97,6 +105,7 @@ function getDb(): DatabaseSync {
       powerToughness TEXT NOT NULL,
       coverImage TEXT,
       ogImage TEXT,
+      skillBody TEXT,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
     )
@@ -104,6 +113,7 @@ function getDb(): DatabaseSync {
   migrateLegacyIdPrimaryKey(db)
   migrateAddEditId(db)
   migrateAddOgImage(db)
+  migrateAddSkillBody(db)
   return db
 }
 
@@ -121,6 +131,7 @@ interface CardRow {
   powerToughness: string
   coverImage: string | null
   ogImage: string | null
+  skillBody: string | null
   createdAt: string
   updatedAt: string
 }
@@ -140,6 +151,7 @@ function rowToCard(row: CardRow): SavedCard {
     powerToughness: row.powerToughness,
     coverImage: row.coverImage ? JSON.parse(row.coverImage) : null,
     ogImage: row.ogImage ?? null,
+    skillBody: row.skillBody ?? '',
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }
@@ -154,8 +166,8 @@ export function upsertSavedCard(card: Card): void {
   const now = new Date().toISOString()
   getDb()
     .prepare(`
-      INSERT INTO cards (publicId, editId, id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, ogImage, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO cards (publicId, editId, id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, ogImage, skillBody, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(publicId) DO UPDATE SET
         id = excluded.id,
         templateId = excluded.templateId,
@@ -168,6 +180,7 @@ export function upsertSavedCard(card: Card): void {
         powerToughness = excluded.powerToughness,
         coverImage = excluded.coverImage,
         ogImage = excluded.ogImage,
+        skillBody = excluded.skillBody,
         updatedAt = excluded.updatedAt
     `)
     .run(
@@ -184,6 +197,7 @@ export function upsertSavedCard(card: Card): void {
       card.powerToughness,
       card.coverImage ? JSON.stringify(card.coverImage) : null,
       card.ogImage ?? null,
+      card.skillBody,
       now,
       now,
     )

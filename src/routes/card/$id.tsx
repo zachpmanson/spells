@@ -129,6 +129,7 @@ function CardViewRoute() {
       showFlavorText: card.showFlavorText,
       powerToughness: card.powerToughness,
       coverImage: card.coverImage,
+      skillBody: card.skillBody,
     }
     loadCard(forked)
     await saveToLibrary()
@@ -171,6 +172,12 @@ function CardViewRoute() {
           <p>Card not found.</p>
         )}
       </div>
+      {card && card.skillBody.trim().length > 0 && (
+        <details className="card-view-skill" open>
+          <summary>Skill body</summary>
+          <pre className="card-view-skill-text">{card.skillBody}</pre>
+        </details>
+      )}
       {memberDecks.length > 0 && (
         <div className="card-view-decks">
           <span>In your decks:</span>

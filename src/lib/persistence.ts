@@ -1,4 +1,5 @@
 import type { Card } from '../types/card'
+import { normalizeCard } from '../types/card'
 import type { Deck } from '../types/deck'
 
 const CURRENT_CARD_KEY = 'spells:currentCard'
@@ -14,7 +15,7 @@ export function loadCurrentCard(): Card | null {
   const raw = localStorage.getItem(CURRENT_CARD_KEY)
   if (!raw) return null
   try {
-    return JSON.parse(raw) as Card
+    return normalizeCard(JSON.parse(raw) as Card)
   } catch {
     return null
   }
@@ -51,7 +52,7 @@ export function loadLibrary(): Card[] {
   const raw = localStorage.getItem(LIBRARY_KEY)
   if (!raw) return []
   try {
-    return JSON.parse(raw) as Card[]
+    return (JSON.parse(raw) as Card[]).map(normalizeCard)
   } catch {
     return []
   }
@@ -113,5 +114,5 @@ export function exportLibraryAsJson(cards: Card[]): void {
 export async function importCardsFromFile(file: File): Promise<Card[]> {
   const text = await file.text()
   const parsed = JSON.parse(text)
-  return Array.isArray(parsed) ? parsed : [parsed]
+  return (Array.isArray(parsed) ? parsed : [parsed]).map(normalizeCard)
 }

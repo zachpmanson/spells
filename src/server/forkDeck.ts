@@ -30,6 +30,7 @@ export const forkDeck = createServerFn({ method: 'POST' })
       showFlavorText: card.showFlavorText,
       powerToughness: card.powerToughness,
       coverImage: card.coverImage,
+      skillBody: card.skillBody,
     }))
     for (const card of cards) {
       upsertSavedCard(card)

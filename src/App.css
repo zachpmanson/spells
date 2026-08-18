@@ -692,3 +692,45 @@ body {
   font-size: 0.85rem;
 }
 
+.card-view-skill {
+  width: min(860px, calc(100% - 3rem));
+  margin: 0 auto 1.5rem;
+  background: #181818;
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.card-view-skill summary {
+  cursor: pointer;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ccc;
+  user-select: none;
+}
+
+.card-view-skill summary:hover {
+  color: #eee;
+}
+
+.card-view-skill-text {
+  margin: 0;
+  padding: 0.9rem;
+  border-top: 1px solid #333;
+  background: #111;
+  color: #ddd;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.skill-body-textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}

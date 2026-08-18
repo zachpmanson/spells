@@ -12,6 +12,7 @@ interface EditSearch {
   powerToughness?: string
   imageUrl?: string
   generateImage?: boolean
+  skillBody?: string
 }
 
 function asString(value: unknown): string | undefined {
@@ -32,6 +33,7 @@ export const Route = createFileRoute('/edit/')({
     powerToughness: asString(search.powerToughness),
     imageUrl: asString(search.imageUrl),
     generateImage: asBoolean(search.generateImage),
+    skillBody: asString(search.skillBody),
   }),
   head: () => ({
     meta: [{ title: 'Edit - Spells' }],
@@ -58,7 +60,8 @@ function EditRoute() {
       search.rulesText !== undefined ||
       search.flavorText !== undefined ||
       search.powerToughness !== undefined ||
-      search.imageUrl !== undefined
+      search.imageUrl !== undefined ||
+      search.skillBody !== undefined
 
     if (hasFieldOverrides) {
       newCardWithOverrides({
@@ -68,6 +71,7 @@ function EditRoute() {
         rulesText: search.rulesText,
         flavorText: search.flavorText,
         powerToughness: search.powerToughness,
+        skillBody: search.skillBody,
         coverImage: search.imageUrl
           ? { source: 'url', dataUrl: search.imageUrl, offsetXPct: 50, offsetYPct: 50, scale: 1 }
           : undefined,

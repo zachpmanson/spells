@@ -45,6 +45,9 @@ export interface Card {
   // Path to a server-stored PNG of the rendered card, used as the
   // OpenGraph/twitter preview image for shared /card/<uuid> links.
   ogImage?: string | null
+  // Raw text dump attached to the card (e.g. the body of a Claude skill) so a
+  // shared /card/<uuid> link conveys both the card image and the full text.
+  skillBody: string
 }
 
 export function createBlankCard(templateId: string): Card {
@@ -62,5 +65,13 @@ export function createBlankCard(templateId: string): Card {
     powerToughness: '1/1',
     coverImage: null,
     ogImage: null,
+    skillBody: '',
   }
+}
+
+// Cards persisted before skillBody existed (localStorage library, SQLite rows,
+// imported JSON) won't carry the field — fill defaults so consumers can rely on
+// it being present without sprinkling `?? ''` everywhere.
+export function normalizeCard(card: Omit<Card, 'skillBody'> & { skillBody?: string }): Card {
+  return { ...card, skillBody: card.skillBody ?? '' }
 }

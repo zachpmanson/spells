@@ -12,7 +12,7 @@ interface CardStoreState {
   library: Card[]
   past: Card[]
   future: Card[]
-  updateField: (field: 'title' | 'manaCost' | 'typeLine' | 'rulesText' | 'flavorText' | 'powerToughness', value: string) => void
+  updateField: (field: 'title' | 'manaCost' | 'typeLine' | 'rulesText' | 'flavorText' | 'powerToughness' | 'skillBody', value: string) => void
   setTemplate: (templateId: string) => void
   setCoverImage: (coverImage: CoverImage | null) => void
   setShowFlavorText: (show: boolean) => void
