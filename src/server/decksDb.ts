@@ -128,6 +128,27 @@ export function listSavedDecks(page = 0, pageSize = 24): { decks: SavedDeck[]; t
   return { decks: rows.map(rowToDeck), total: count }
 }
 
+// Decks owned by a specific identity. Backs the signed-in index ("my
+// library"): lists only rows claimed by the forwarded X-Auth-User owner. The
+// same ownership-gate rule as cards — unclaimed rows belong to the
+// anonymous/editId flow and are not shown to a signed-in owner here.
+export function listOwnedDecks(owner: string): SavedDeck[] {
+  const rows = getDb()
+    .prepare('SELECT * FROM decks WHERE owner = ? ORDER BY updatedAt DESC')
+    .all(owner) as unknown as DeckRow[]
+  return rows.map(rowToDeck)
+}
+
+// Deletes a deck, owner-gated: only the deck's claimed owner may delete it.
+// Also removes its membership rows in deck_cards.
+export function deleteDeck(publicId: string, owner: string | null): void {
+  const row = getDb().prepare('SELECT * FROM decks WHERE publicId = ?').get(publicId) as unknown as DeckRow | undefined
+  if (!row) return
+  if (row.owner && row.owner !== owner) throw new Error('Not authorized to delete this deck')
+  getDb().prepare('DELETE FROM deck_cards WHERE deckPublicId = ?').run(publicId)
+  getDb().prepare('DELETE FROM decks WHERE publicId = ?').run(publicId)
+}
+
 export function getDeckByPublicId(publicId: string): SavedDeck | null {
   const row = getDb().prepare('SELECT * FROM decks WHERE publicId = ?').get(publicId) as unknown as DeckRow | undefined
   return row ? rowToDeck(row) : null

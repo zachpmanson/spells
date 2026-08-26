@@ -240,6 +240,28 @@ export function listSavedCards(page = 0, pageSize = 24): { cards: SavedCard[]; t
   return { cards: rows.map(rowToCard), total: count }
 }
 
+// Cards owned by a specific identity. Backs the signed-in index ("my
+// library"): lists only rows claimed by the forwarded X-Auth-User owner, so
+// the index shows the user's own saved cards from the DB rather than the
+// localStorage-only list. Unclaimed (NULL-owner) rows are excluded here —
+// they're the anonymous/local pre-auth artifacts.
+export function listOwnedCards(owner: string): SavedCard[] {
+  const rows = getDb()
+    .prepare('SELECT * FROM cards WHERE owner = ? ORDER BY updatedAt DESC')
+    .all(owner) as unknown as CardRow[]
+  return rows.map(rowToCard)
+}
+
+// Deletes a card, owner-gated: only the card's claimed owner may delete it.
+// Throws as if it were a foreign write; the card stays untouched for the
+// anonymous/local owner if never claimed.
+export function deleteCard(publicId: string, owner: string | null): void {
+  const row = getDb().prepare('SELECT * FROM cards WHERE publicId = ?').get(publicId) as unknown as CardRow | undefined
+  if (!row) return
+  if (row.owner && row.owner !== owner) throw new Error('Not authorized to delete this card')
+  getDb().prepare('DELETE FROM cards WHERE publicId = ?').run(publicId)
+}
+
 export function getSavedCard(publicId: string): SavedCard | null {
   const row = getDb().prepare('SELECT * FROM cards WHERE publicId = ?').get(publicId) as unknown as CardRow | undefined
   return row ? rowToCard(row) : null
