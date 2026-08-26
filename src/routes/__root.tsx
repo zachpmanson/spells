@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
 import '../App.css'
 import '../styles/tailwind.css'
+import { UserBadge } from '../components/UserBadge'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -30,6 +31,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <HeadContent />
       </head>
       <body>
+        <UserBadge />
         {children}
         <Scripts />
       </body>
