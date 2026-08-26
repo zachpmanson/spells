@@ -16,7 +16,20 @@ export const Route = createFileRoute('/login')({
 
 function LoginRoute() {
   if (typeof window !== 'undefined') {
-    window.location.replace('/')
+    // Landing here means the browser just completed a full-page nav to /login
+    // (following the "sign in" link) and the Basic-auth dialog succeeded. Go
+    // BACK to the page the user was on rather than always dumping them home —
+    // they clicked sign-in from somewhere specific (e.g. a shared card) and
+    // should resume there. document.referrer, being the same-tab previous
+    // location, is that page; ignore anything cross-origin and fall back to
+    // home when there's no referrer (direct /login visit or new tab).
+    const { origin } = window.location
+    const referrer = document.referrer
+    if (referrer && referrer.startsWith(origin)) {
+      window.location.replace(referrer)
+    } else {
+      window.location.replace('/')
+    }
   }
   return null
 }
