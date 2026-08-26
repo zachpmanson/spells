@@ -57,7 +57,7 @@ function getDb(): DatabaseSync {
       PRIMARY KEY (deckPublicId, cardPublicId)
     )
   `)
-  migrateAddDeckImage(db)
+  migrateAddDeckOgImage(db)
   migrateAddDeckOwner(db)
   return db
 }
