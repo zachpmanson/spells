@@ -6,9 +6,11 @@ import { useDeckStore } from '../../../lib/deckStore'
 import { getDeckForEdit } from '../../../server/getDeckForEdit'
 import { removeCardFromDeck } from '../../../server/removeCardFromDeck'
 import type { SavedCard } from '../../../server/cardsDb'
+import EditAccessError from '../../../components/EditAccessError'
 
 export const Route = createFileRoute('/deck/edit/$id')({
   loader: ({ params }) => getDeckForEdit({ data: { editId: params.id } }),
+  errorComponent: EditAccessError,
   head: ({ loaderData }) => ({
     meta: [{ title: loaderData?.deck.title ? `Edit ${loaderData.deck.title} - Spells` : 'Spells' }],
   }),

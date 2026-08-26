@@ -3,9 +3,11 @@ import { useEffect } from 'react'
 import App from '../../App'
 import { useCardStore } from '../../lib/cardStore'
 import { getCardForEdit } from '../../server/getCardForEdit'
+import EditAccessError from '../../components/EditAccessError'
 
 export const Route = createFileRoute('/edit/$id')({
   loader: ({ params }) => getCardForEdit({ data: { editId: params.id } }),
+  errorComponent: EditAccessError,
   head: () => ({
     meta: [{ title: 'Edit - Spells' }],
   }),
