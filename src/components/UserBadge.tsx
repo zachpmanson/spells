@@ -21,7 +21,7 @@ export function UserBadge() {
   }, [])
 
   return (
-    <div className="pointer-events-none fixed right-3 top-3 z-50 flex flex-col items-end gap-1">
+    <div className="pointer-events-none fixed bottom-3 right-3 z-50 flex flex-col items-end gap-1">
       {checked && user ? (
         <span className="rounded-full bg-slate-800/80 px-3 py-1 text-xs font-medium text-slate-100 ring-1 ring-slate-600/60">
           signed in as {user}
