@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDeckStore } from '../lib/deckStore'
+import { listMyDecks } from '../server/listMyDecks'
+import type { SavedDeck } from '../server/decksDb'
 
 const NEW_DECK_OPTION = '__new__'
 
@@ -9,19 +11,36 @@ interface AddToDeckSelectProps {
 
 export function AddToDeckSelect({ getCardPublicId }: AddToDeckSelectProps) {
   const deckLibrary = useDeckStore((s) => s.deckLibrary)
-  const hydrateDecksFromStorage = useDeckStore((s) => s.hydrateDecksFromStorage)
   const createDeck = useDeckStore((s) => s.createDeck)
   const addCardToDeck = useDeckStore((s) => s.addCardToDeck)
+  const [ownedDecks, setOwnedDecks] = useState<SavedDeck[] | null>(null)
   const [justAdded, setJustAdded] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
+  // Signed-in: the library (and deck list) live in the DB, not localStorage, so
+  // pull the owned decks here. Anonymous falls back to the localStorage deck
+  // store. ownedDecks stays null until we resolve: once we know we're anonymous
+  // we use deckLibrary as before.
   useEffect(() => {
-    hydrateDecksFromStorage()
-  }, [hydrateDecksFromStorage])
+    let cancelled = false
+    listMyDecks()
+      .then(({ decks }) => {
+        if (!cancelled) setOwnedDecks(decks)
+      })
+      .catch(() => {
+        // 401 (no auth header) -> anonymous visitor -> localStorage view
+        if (!cancelled) setOwnedDecks(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     return () => clearTimeout(timeoutRef.current)
   }, [])
+
+  const decks = ownedDecks ?? deckLibrary
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.target.value
@@ -56,7 +75,7 @@ export function AddToDeckSelect({ getCardPublicId }: AddToDeckSelectProps) {
       <option value="" disabled>
         {justAdded ? 'Added ✓' : 'Add to deck…'}
       </option>
-      {deckLibrary.map((deck) => (
+      {decks.map((deck) => (
         <option key={deck.id} value={deck.editId}>
           {deck.title || 'Untitled deck'}
         </option>
