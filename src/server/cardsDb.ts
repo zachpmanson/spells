@@ -92,9 +92,15 @@ function migrateAddSkillBody(instance: DatabaseSync): void {
 // afterwards get owner stamped from the forwarded identity.
 function migrateAddOwner(instance: DatabaseSync): void {
   const columns = instance.prepare('PRAGMA table_info(cards)').all() as unknown as Array<{ name: string }>
-  if (columns.length === 0 || columns.some((c) => c.name === 'owner')) return
-
-  instance.exec('ALTER TABLE cards ADD COLUMN owner TEXT')
+  if (columns.length === 0) return
+  if (!columns.some((c) => c.name === 'owner')) {
+    instance.exec('ALTER TABLE cards ADD COLUMN owner TEXT')
+  }
+  // Deterministically claim any unowned row for the default owner. Makes this
+  // migration idempotent: safe to run on every startup even when owner already
+  // exists. In the past a column was observed missing at runtime despite the
+  // migration present in code — this guarantees the column regardless of the
+  // state in which the DB was first created.
   instance.prepare('UPDATE cards SET owner = ? WHERE owner IS NULL').run('zach')
 }
 

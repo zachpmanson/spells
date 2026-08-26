@@ -21,8 +21,12 @@ function migrateAddDeckOgImage(instance: DatabaseSync): void {
 // Claimed decks are writable only by that owner; cards' editId-gated.
 function migrateAddDeckOwner(instance: DatabaseSync): void {
   const columns = instance.prepare('PRAGMA table_info(decks)').all() as unknown as Array<{ name: string }>
-  if (columns.length === 0 || columns.some((c) => c.name === 'owner')) return
-  instance.exec('ALTER TABLE decks ADD COLUMN owner TEXT')
+  if (columns.length === 0) return
+  if (!columns.some((c) => c.name === 'owner')) {
+    instance.exec('ALTER TABLE decks ADD COLUMN owner TEXT')
+  }
+  // Idempotent claim of unowned rows for the default owner. Mirrors the cards
+  // migration; the column is guaranteed present after this runs.
   instance.prepare('UPDATE decks SET owner = ? WHERE owner IS NULL').run('zach')
 }
 
