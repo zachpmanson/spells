@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as EditRouteRouteImport } from './routes/edit/route'
 import { Route as DeckRouteRouteImport } from './routes/deck/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -22,6 +23,11 @@ import { Route as DeckEditRouteRouteImport } from './routes/deck/edit/route'
 import { Route as DeckEditIdRouteImport } from './routes/deck/edit/$id'
 import { Route as ApiImagesIdRouteImport } from './routes/api/images/$id'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EditRouteRoute = EditRouteRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/deck': typeof DeckRouteRouteWithChildren
   '/edit': typeof EditRouteRouteWithChildren
+  '/login': typeof LoginRoute
   '/deck/edit': typeof DeckEditRouteRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
   '/admin/decks': typeof AdminDecksRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/deck': typeof DeckRouteRouteWithChildren
+  '/login': typeof LoginRoute
   '/deck/edit': typeof DeckEditRouteRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
   '/admin/decks': typeof AdminDecksRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/deck': typeof DeckRouteRouteWithChildren
   '/edit': typeof EditRouteRouteWithChildren
+  '/login': typeof LoginRoute
   '/deck/edit': typeof DeckEditRouteRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
   '/admin/decks': typeof AdminDecksRoute
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/'
     | '/deck'
     | '/edit'
+    | '/login'
     | '/deck/edit'
     | '/admin/cards'
     | '/admin/decks'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/deck'
+    | '/login'
     | '/deck/edit'
     | '/admin/cards'
     | '/admin/decks'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/'
     | '/deck'
     | '/edit'
+    | '/login'
     | '/deck/edit'
     | '/admin/cards'
     | '/admin/decks'
@@ -173,6 +185,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DeckRouteRoute: typeof DeckRouteRouteWithChildren
   EditRouteRoute: typeof EditRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
   AdminCardsRoute: typeof AdminCardsRoute
   AdminDecksRoute: typeof AdminDecksRoute
   CardIdRoute: typeof CardIdRoute
@@ -181,6 +194,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/edit': {
       id: '/edit'
       path: '/edit'
@@ -312,6 +332,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DeckRouteRoute: DeckRouteRouteWithChildren,
   EditRouteRoute: EditRouteRouteWithChildren,
+  LoginRoute: LoginRoute,
   AdminCardsRoute: AdminCardsRoute,
   AdminDecksRoute: AdminDecksRoute,
   CardIdRoute: CardIdRoute,
