@@ -2,24 +2,15 @@ import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { useCardStore } from '../lib/cardStore';
 import { useDeckStore } from '../lib/deckStore';
+import { useOwnedLibrary } from '../lib/ownedLibrary';
 import { getSavedCardIds } from '../server/listSavedCardIds';
-import { getMyLibrary } from '../server/getMyLibrary';
 import { deleteCard as serverDeleteCard } from '../server/deleteCard';
 import { deleteDeck as serverDeleteDeck } from '../server/deleteDeck';
-import { whoami } from '../server/whoami';
-import type { SavedCard } from '../server/cardsDb';
-import type { SavedDeck } from '../server/decksDb';
 import { Button } from './Button';
 import { DeckTile } from './DeckTile';
 import { CardTile } from './CardTile';
 
-// Signed-in "my library": the server returns only the rows owned by this user
-// (X-Auth-User). Anonymous gets the localStorage-driven view below.
-interface MyLibrary {
-  cards: SavedCard[]
-  decks: SavedDeck[]
-  previews: Record<string, SavedCard[]>
-}
+// Signed-in "my library" state lives in useOwnedLibrary (see ../lib/ownedLibrary).
 
 export function Gallery() {
   const navigate = useNavigate()
@@ -33,11 +24,16 @@ export function Gallery() {
   const deleteDeckFromLibrary = useDeckStore((s) => s.deleteDeckFromLibrary)
   const [savedIds, setSavedIds] = useState<Set<string> | null>(null)
 
-  // Signed-in library state (null = anonymous, use localStorage view).
-  const [authed, setAuthed] = useState(false)
-  const [myCards, setMyCards] = useState<SavedCard[] | null>(null)
-  const [myDecks, setMyDecks] = useState<SavedDeck[] | null>(null)
-  const [myPreviews, setMyPreviews] = useState<Record<string, SavedCard[]>>({})
+  // Signed-in library state lives in a store (not component state) so it
+  // survives Gallery unmounting/remounting on navigation — otherwise returning
+  // to the library re-fetches and flashes the null/"Loading…" state.
+  const authed = useOwnedLibrary((s) => s.authed)
+  const myCards = useOwnedLibrary((s) => s.cards)
+  const myDecks = useOwnedLibrary((s) => s.decks)
+  const myPreviews = useOwnedLibrary((s) => s.previews)
+  const loadOwnedLibrary = useOwnedLibrary((s) => s.load)
+  const removeCardFromOwned = useOwnedLibrary((s) => s.removeCard)
+  const removeDeckFromOwned = useOwnedLibrary((s) => s.removeDeck)
 
   useEffect(() => {
     getSavedCardIds()
@@ -46,26 +42,11 @@ export function Gallery() {
   }, [])
 
   // Resolve identity; if signed in, pull the owned library from the server
-  // instead of the localStorage decks the anonymous view uses.
+  // instead of the localStorage decks the anonymous view uses. The store guards
+  // against re-fetching when already loaded this session.
   useEffect(() => {
-    let cancelled = false
-    whoami()
-      .then(({ user }) => {
-        if (cancelled) return
-        if (!user) return // anonymous -> default localStorage view
-        setAuthed(true)
-        return getMyLibrary().then((lib) => {
-          if (cancelled) return
-          setMyCards(lib.cards)
-          setMyDecks(lib.decks)
-          setMyPreviews(lib.previews)
-        })
-      })
-      .catch((err) => console.error('Failed to resolve library:', err))
-    return () => {
-      cancelled = true
-    }
-  }, [])
+    loadOwnedLibrary()
+  }, [loadOwnedLibrary])
 
   useEffect(() => {
     hydrateDecksFromStorage()
@@ -90,7 +71,7 @@ export function Gallery() {
     if (authed) {
       if (saved?.publicId) {
         await serverDeleteCard({ data: { publicId: saved.publicId } })
-        setMyCards((cards) => cards?.filter((c) => c.id !== cardId) ?? null)
+        removeCardFromOwned(cardId)
       } else {
         // A signed-in library came from the DB, so cards always have publicId;
         // fall back to the local-only path defensively.
@@ -105,7 +86,7 @@ export function Gallery() {
     const deck = authed ? myDecks?.find((d) => d.id === deckId) : deckLibrary.find((d) => d.id === deckId)
     if (authed && deck) {
       await serverDeleteDeck({ data: { publicId: deck.publicId } })
-      setMyDecks((prev) => prev?.filter((d) => d.id !== deckId) ?? null)
+      removeDeckFromOwned(deckId)
     } else {
       deleteDeckFromLibrary(deckId)
     }
