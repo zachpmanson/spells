@@ -15,6 +15,17 @@ function migrateAddDeckOgImage(instance: DatabaseSync): void {
   instance.exec('ALTER TABLE decks ADD COLUMN ogImage TEXT')
 }
 
+// Pre-dates account ownership (mirrors cards.owner): initial migration
+// claims every existing deck for the default owner ('zach'), matching the
+// cards backfill so the whole pre-auth library sits in the owning account.
+// Claimed decks are writable only by that owner; cards' editId-gated.
+function migrateAddDeckOwner(instance: DatabaseSync): void {
+  const columns = instance.prepare('PRAGMA table_info(decks)').all() as unknown as Array<{ name: string }>
+  if (columns.length === 0 || columns.some((c) => c.name === 'owner')) return
+  instance.exec('ALTER TABLE decks ADD COLUMN owner TEXT')
+  instance.prepare('UPDATE decks SET owner = ? WHERE owner IS NULL').run('zach')
+}
+
 function getDb(): DatabaseSync {
   if (db) return db
 
@@ -29,6 +40,7 @@ function getDb(): DatabaseSync {
       id TEXT NOT NULL,
       title TEXT NOT NULL,
       ogImage TEXT,
+      owner TEXT,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
     )
@@ -41,7 +53,8 @@ function getDb(): DatabaseSync {
       PRIMARY KEY (deckPublicId, cardPublicId)
     )
   `)
-  migrateAddDeckOgImage(db)
+  migrateAddDeckImage(db)
+  migrateAddDeckOwner(db)
   return db
 }
 
@@ -51,11 +64,12 @@ interface DeckRow {
   id: string
   title: string
   ogImage: string | null
+  owner: string | null
   createdAt: string
   updatedAt: string
 }
 
-export type SavedDeck = Deck & { createdAt: string; updatedAt: string }
+export type SavedDeck = Deck & { owner: string | null; createdAt: string; updatedAt: string }
 
 function rowToDeck(row: DeckRow): SavedDeck {
   return {
@@ -64,29 +78,46 @@ function rowToDeck(row: DeckRow): SavedDeck {
     editId: row.editId,
     title: row.title,
     ogImage: row.ogImage ?? null,
+    owner: row.owner ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }
 }
 
-export function renameDeck(editId: string, title: string): void {
+// Owner-gating shared by every deck edit path. A claimed deck (owner set) is
+// writable only by that owner; an unclaimed deck stays writable by its editId
+// bearer (pre-auth rows). `owner` is the caller's forwarded identity (from the
+// auth request-middleware context), null when unauthenticated.
+export function assertDeckOwnership(deck: SavedDeck | null, owner: string | null): void {
+  if (!deck) return
+  if (deck.owner && deck.owner !== owner) {
+    throw new Error('Not authorized to edit this deck')
+  }
+}
+
+export function renameDeck(editId: string, title: string, owner: string | null): void {
+  const deck = getDeckByEditId(editId)
+  assertDeckOwnership(deck, owner)
   getDb()
     .prepare('UPDATE decks SET title = ?, updatedAt = ? WHERE editId = ?')
     .run(title, new Date().toISOString(), editId)
 }
 
-export function upsertDeck(deck: Deck): void {
+export function upsertDeck(deck: Deck, owner: string | null): void {
+  const existing = getDeckByPublicId(deck.publicId)
+  assertDeckOwnership(existing, owner)
+  const effectiveOwner = existing?.owner ?? owner
   const now = new Date().toISOString()
   getDb()
     .prepare(`
-      INSERT INTO decks (publicId, editId, id, title, ogImage, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO decks (publicId, editId, id, title, ogImage, owner, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(publicId) DO UPDATE SET
         title = excluded.title,
         ogImage = excluded.ogImage,
         updatedAt = excluded.updatedAt
     `)
-    .run(deck.publicId, deck.editId, deck.id, deck.title, deck.ogImage ?? null, now, now)
+    .run(deck.publicId, deck.editId, deck.id, deck.title, deck.ogImage ?? null, effectiveOwner, now, now)
 }
 
 export function listSavedDecks(page = 0, pageSize = 24): { decks: SavedDeck[]; total: number } {
@@ -127,6 +158,7 @@ interface CardJoinRow {
   powerToughness: string
   coverImage: string | null
   ogImage: string | null
+  owner: string | null
   createdAt: string
   updatedAt: string
 }
@@ -146,6 +178,7 @@ function rowToSavedCard(row: CardJoinRow): SavedCard {
     powerToughness: row.powerToughness,
     coverImage: row.coverImage ? JSON.parse(row.coverImage) : null,
     ogImage: row.ogImage ?? null,
+    owner: row.owner ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }
@@ -181,7 +214,8 @@ export function listCardPreviewsForDecks(deckPublicIds: string[], limit = 3): Re
   return result
 }
 
-export function addCardToDeck(deckPublicId: string, cardPublicId: string): void {
+export function addCardToDeck(deckPublicId: string, cardPublicId: string, owner: string | null): void {
+  assertDeckOwnership(getDeckByPublicId(deckPublicId), owner)
   getDb()
     .prepare(`
       INSERT INTO deck_cards (deckPublicId, cardPublicId, addedAt)
@@ -191,7 +225,8 @@ export function addCardToDeck(deckPublicId: string, cardPublicId: string): void 
     .run(deckPublicId, cardPublicId, new Date().toISOString())
 }
 
-export function removeCardFromDeck(deckPublicId: string, cardPublicId: string): void {
+export function removeCardFromDeck(deckPublicId: string, cardPublicId: string, owner: string | null): void {
+  assertDeckOwnership(getDeckByPublicId(deckPublicId), owner)
   getDb()
     .prepare('DELETE FROM deck_cards WHERE deckPublicId = ? AND cardPublicId = ?')
     .run(deckPublicId, cardPublicId)

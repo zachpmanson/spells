@@ -4,7 +4,7 @@ import path from 'node:path'
 import type { Card } from '../types/card'
 import { getDataDir } from './dataDir'
 
-export type SavedCard = Omit<Card, 'publicId'> & { publicId: string; createdAt: string; updatedAt: string }
+export type SavedCard = Omit<Card, 'publicId'> & { publicId: string; owner: string | null; createdAt: string; updatedAt: string }
 
 let db: DatabaseSync | null = null
 
@@ -85,6 +85,19 @@ function migrateAddSkillBody(instance: DatabaseSync): void {
   instance.exec('ALTER TABLE cards ADD COLUMN skillBody TEXT')
 }
 
+// Pre-dates account ownership (X-Auth-User). Initial migration: every
+// pre-existing card is claimed by the default owner ('zach'), so the whole
+// existing library lands in the owning account — editing stays possible for
+// that identity, and anonymous viewers can only read. New rows created
+// afterwards get owner stamped from the forwarded identity.
+function migrateAddOwner(instance: DatabaseSync): void {
+  const columns = instance.prepare('PRAGMA table_info(cards)').all() as unknown as Array<{ name: string }>
+  if (columns.length === 0 || columns.some((c) => c.name === 'owner')) return
+
+  instance.exec('ALTER TABLE cards ADD COLUMN owner TEXT')
+  instance.prepare('UPDATE cards SET owner = ? WHERE owner IS NULL').run('zach')
+}
+
 function getDb(): DatabaseSync {
   if (db) return db
 
@@ -106,6 +119,7 @@ function getDb(): DatabaseSync {
       coverImage TEXT,
       ogImage TEXT,
       skillBody TEXT,
+      owner TEXT,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
     )
@@ -114,6 +128,7 @@ function getDb(): DatabaseSync {
   migrateAddEditId(db)
   migrateAddOgImage(db)
   migrateAddSkillBody(db)
+  migrateAddOwner(db)
   return db
 }
 
@@ -132,6 +147,7 @@ interface CardRow {
   coverImage: string | null
   ogImage: string | null
   skillBody: string | null
+  owner: string | null
   createdAt: string
   updatedAt: string
 }
@@ -152,22 +168,34 @@ function rowToCard(row: CardRow): SavedCard {
     coverImage: row.coverImage ? JSON.parse(row.coverImage) : null,
     ogImage: row.ogImage ?? null,
     skillBody: row.skillBody ?? '',
+    owner: row.owner ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }
 }
 
-export function upsertSavedCard(card: Card): void {
+export function upsertSavedCard(card: Card, owner: string | null): void {
   if (!card.publicId) throw new Error('Card must have a publicId before it can be saved server-side')
   const existing = getSavedCard(card.publicId)
+  // Owner-gated: an existing card edited through its editId is only allowed if
+  // (a) it is unowned (pre-auth card, editId bearer rule), or (b) the caller's
+  // forwarded identity is the owner. The editId alone no longer grants edit
+  // once a card is claimed by an account.
+  if (existing && existing.owner && existing.owner !== owner) {
+    throw new Error('Not authorized to edit this card')
+  }
   if (existing && existing.editId !== card.editId) {
     throw new Error('Not authorized to edit this card')
   }
+  // First save claims the card for the creating identity. A nil owner (no
+  // auth header) leaves it unowned so the editId bearer can still edit, which
+  // keeps the anonymous/local flow working until auth is on.
+  const effectiveOwner = existing?.owner ?? owner
   const now = new Date().toISOString()
   getDb()
     .prepare(`
-      INSERT INTO cards (publicId, editId, id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, ogImage, skillBody, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO cards (publicId, editId, id, templateId, title, manaCost, typeLine, rulesText, flavorText, showFlavorText, powerToughness, coverImage, ogImage, skillBody, owner, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(publicId) DO UPDATE SET
         id = excluded.id,
         templateId = excluded.templateId,
@@ -198,6 +226,7 @@ export function upsertSavedCard(card: Card): void {
       card.coverImage ? JSON.stringify(card.coverImage) : null,
       card.ogImage ?? null,
       card.skillBody,
+      effectiveOwner,
       now,
       now,
     )
