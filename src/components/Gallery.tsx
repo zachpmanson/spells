@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useCardStore } from '../lib/cardStore';
 import { useDeckStore } from '../lib/deckStore';
 import { getSavedCardIds } from '../server/listSavedCardIds';
@@ -7,19 +7,12 @@ import { getMyLibrary } from '../server/getMyLibrary';
 import { deleteCard as serverDeleteCard } from '../server/deleteCard';
 import { deleteDeck as serverDeleteDeck } from '../server/deleteDeck';
 import { whoami } from '../server/whoami';
+import { loadMyLibraryCache, saveMyLibraryCache, clearMyLibraryCache } from '../lib/persistence';
 import type { SavedCard } from '../server/cardsDb';
 import type { SavedDeck } from '../server/decksDb';
 import { Button } from './Button';
 import { DeckTile } from './DeckTile';
 import { CardTile } from './CardTile';
-
-// Signed-in "my library": the server returns only the rows owned by this user
-// (X-Auth-User). Anonymous gets the localStorage-driven view below.
-interface MyLibrary {
-  cards: SavedCard[]
-  decks: SavedDeck[]
-  previews: Record<string, SavedCard[]>
-}
 
 export function Gallery() {
   const navigate = useNavigate()
@@ -33,11 +26,16 @@ export function Gallery() {
   const deleteDeckFromLibrary = useDeckStore((s) => s.deleteDeckFromLibrary)
   const [savedIds, setSavedIds] = useState<Set<string> | null>(null)
 
-  // Signed-in library state (null = anonymous, use localStorage view).
-  const [authed, setAuthed] = useState(false)
-  const [myCards, setMyCards] = useState<SavedCard[] | null>(null)
-  const [myDecks, setMyDecks] = useState<SavedDeck[] | null>(null)
-  const [myPreviews, setMyPreviews] = useState<Record<string, SavedCard[]>>({})
+  // Seed the signed-in view synchronously from the last cached library so the
+  // tile grid is present in the first render's view-transition snapshot (that's
+  // what lets the shared-element morph play on return to the homepage). The
+  // whoami()/getMyLibrary effect below then reconciles it against the server in
+  // the background (stale-while-revalidate) and refreshes the cache.
+  const cachedLibrary = useMemo(() => loadMyLibraryCache(), [])
+  const [authed, setAuthed] = useState(Boolean(cachedLibrary))
+  const [myCards, setMyCards] = useState<SavedCard[] | null>(cachedLibrary ? cachedLibrary.cards : null)
+  const [myDecks, setMyDecks] = useState<SavedDeck[] | null>(cachedLibrary ? cachedLibrary.decks : null)
+  const [myPreviews, setMyPreviews] = useState<Record<string, SavedCard[]>>(cachedLibrary ? cachedLibrary.previews : {})
 
   useEffect(() => {
     getSavedCardIds()
@@ -45,27 +43,44 @@ export function Gallery() {
       .catch((err) => console.error('Failed to check which cards are saved:', err))
   }, [])
 
-  // Resolve identity; if signed in, pull the owned library from the server
-  // instead of the localStorage decks the anonymous view uses.
+  // Resolve identity; if signed in, reconcile the (possibly cached) library
+  // with the server in the background. Seeding comes synchronously from the
+  // cache in the useState initializers above, so the homepage mounts with its
+  // tiles already present and the view-transition morph isn't starved by the
+  // async server round-trip. The server stays the source of truth.
   useEffect(() => {
     let cancelled = false
     whoami()
       .then(({ user }) => {
         if (cancelled) return
-        if (!user) return // anonymous -> default localStorage view
-        setAuthed(true)
-        return getMyLibrary().then((lib) => {
-          if (cancelled) return
-          setMyCards(lib.cards)
-          setMyDecks(lib.decks)
-          setMyPreviews(lib.previews)
-        })
+        if (!user) {
+          // Anonymous → default localStorage view. If we optimistically seeded
+          // a signed-in cache above, discard it rather than leak it.
+          if (cachedLibrary) {
+            setAuthed(false)
+            setMyCards(null)
+            setMyDecks(null)
+            setMyPreviews({})
+            clearMyLibraryCache(cachedLibrary.user)
+          }
+          return
+        }
+        if (!cancelled) setAuthed(true)
+        getMyLibrary()
+          .then((lib) => {
+            if (cancelled) return
+            setMyCards(lib.cards)
+            setMyDecks(lib.decks)
+            setMyPreviews(lib.previews)
+            saveMyLibraryCache({ user, ...lib })
+          })
+          .catch((err) => console.error('Failed to refresh library:', err))
       })
       .catch((err) => console.error('Failed to resolve library:', err))
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [cachedLibrary])
 
   useEffect(() => {
     hydrateDecksFromStorage()
