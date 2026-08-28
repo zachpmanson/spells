@@ -98,11 +98,15 @@ function CardViewRoute() {
       .catch((err) => console.error('Failed to check deck membership:', err))
   }, [hydrated, deckLibrary, id])
 
-  // A card you can actually edit: present in the local library AND holding the
-  // real editId. Shared cards adopted from a /card/<uuid> link carry a redacted
-  // editId, so they're viewable/forkable but not editable (and can't be
-  // re-saved server-side).
-  const ownedCard = hydrated ? library.find((c) => c.publicId === id && Boolean(c.editId)) : undefined
+  // A card you can actually edit. Two sources, either of which qualifies:
+  //  - the loader's card carries a real editId because the edge-authenticated
+  //    caller is the owner (getCard returns the unredacted card to them), so
+  //    Edit shows even on a fresh device / direct share link; or
+  //  - the card is already in this browser's localStorage library holding a
+  //    real editId (cards adopted from a share link carry a redacted editId, so
+  //    they're viewable/forkable but not editable).
+  const serverOwned = card?.editId ? card : undefined
+  const ownedCard = serverOwned ?? (hydrated ? library.find((c) => c.publicId === id && Boolean(c.editId)) : undefined)
   const memberDecks = deckLibrary.filter((d) => memberDeckIds.has(d.publicId))
 
   // Backfill: render the OpenGraph preview for owned cards that don't have one
