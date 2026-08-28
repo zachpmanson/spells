@@ -15,6 +15,11 @@ import { createMiddleware } from '@tanstack/react-start'
 export const auth = createMiddleware({
   type: 'request',
 }).server(async ({ request, next }) => {
-  const user = request.headers.get('x-auth-user') ?? null
+  const raw = request.headers.get('x-auth-user') ?? null
+  // `guest` is the reserved sign-out account (edge-auth pattern): Caddy
+  // accepts it so the browser can silently swap to it (no 401 prompt), but to
+  // the app guest === anonymous — map it to null so every downstream check
+  // (whoami, owner-gating) treats it as signed out.
+  const user = raw === 'guest' ? null : raw
   return next({ context: { authUser: user } })
 })

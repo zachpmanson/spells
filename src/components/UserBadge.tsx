@@ -20,12 +20,31 @@ export function UserBadge() {
       .finally(() => setChecked(true))
   }, [])
 
+  // Edge logout. Identity is HTTP Basic auth stamped by Caddy, so there is no
+  // server session to destroy. Caddy accepts a reserved `guest` account (see
+  // src/server/auth.ts) and the app treats it as anonymous — so signing in as
+  // guest SILENTLY signs out (no 401/popup). Land on / (a public page,
+  // anonymous-readable) so guest is served without tripping a gate. The root
+  // document's baseURI-scrub script then rewrites the credential-bearing URL
+  // to a clean / before any fetch runs.
+  const edgeLogout = () => {
+    const { protocol, host } = window.location
+    window.location.href = `${protocol}//guest:guest@${host}/`
+  }
+
   return (
     <div className="pointer-events-none fixed bottom-3 right-3 z-50 flex flex-col items-end gap-1">
       {checked && user ? (
-        <span className="rounded-full bg-slate-800/80 px-3 py-1 text-xs font-medium text-slate-100 ring-1 ring-slate-600/60">
-          signed in as {user}
-        </span>
+        <div className="flex items-center gap-2 rounded-full bg-slate-800/80 px-3 py-1 text-xs font-medium text-slate-100 ring-1 ring-slate-600/60">
+          <span>signed in as {user}</span>
+          <button
+            type="button"
+            onClick={edgeLogout}
+            className="pointer-events-auto text-slate-400 underline transition hover:text-slate-200"
+          >
+            sign out
+          </button>
+        </div>
       ) : checked ? (
         <a
           href="/login"
