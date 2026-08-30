@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CardPreview } from '../../../components/CardPreview'
 import { Button } from '../../../components/Button'
 import { useDeckStore } from '../../../lib/deckStore'
@@ -26,7 +26,19 @@ function DeckEditRoute() {
   const [title, setTitle] = useState(data?.deck.title ?? '')
   const [savedTitle, setSavedTitle] = useState(data?.deck.title ?? '')
   const [savingTitle, setSavingTitle] = useState(false)
+  const [dirty, setDirty] = useState(false)
   const renameDeck = useDeckStore((s) => s.renameDeck)
+
+  // The title input renders unconditionally (so it's in the first commit for
+  // the view-transition morph), which means `data` — and with it the deck
+  // title — arrives a frame AFTER the field's useState initializers ran. Once
+  // the loader data lands, backfill the title — unless the user already typed
+  // (dirty), in which case their keystrokes win.
+  useEffect(() => {
+    if (!data || dirty) return
+    setTitle(data.deck.title)
+    setSavedTitle(data.deck.title)
+  }, [data, dirty])
 
   async function handleRemove(cardPublicId: string) {
     setRemovingId(cardPublicId)
@@ -61,15 +73,22 @@ function DeckEditRoute() {
           <Button to="/">
             <span style={{ viewTransitionName: 'library-title' }}>Library</span>
           </Button>
-          {data && (
-            <input
-              className="deck-title-input"
-              style={{ viewTransitionName: `deck-${data.deck.publicId}-title` }}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              aria-label="Deck name"
-            />
-          )}
+          {/* Rendered unconditionally so the input exists in the first commit
+              of client-side navigation (loader data lands a frame later, after
+              the view-transition new-state snapshot) — same reason the deck
+              view page's h1 is unconditional. The transition name needs the
+              publicId, which only the loader carries; when that isn't here
+              yet there's no morph but the input still renders. */}
+          <input
+            className="deck-title-input"
+            style={data ? { viewTransitionName: `deck-${data.deck.publicId}-title` } : undefined}
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value)
+              setDirty(true)
+            }}
+            aria-label="Deck name"
+          />
         </div>
         {data && (
           <div className="library-header-actions">

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { CardPreview } from '../../components/CardPreview'
 import { Button } from '../../components/Button'
@@ -38,6 +38,15 @@ export const Route = createFileRoute('/deck/$id')({
 function DeckViewRoute() {
   const { id } = Route.useParams()
   const data = Route.useLoaderData()
+  // Deck title for the first render: the loader's data arrives ~one frame after
+  // the route commits (TanStack Start resolves it asynchronously), which is
+  // AFTER the view-transition new-state snapshot is captured. The h1 span must
+  // therefore exist unconditionally (never gated on data) or the
+  // deck-<id>-title morph back from the card page's breadcrumb never runs.
+  // For the text, prefer loader data; fall back to the title carried through
+  // the breadcrumb's nav state (present when returning from a card page) so
+  // the first frame shows the real title rather than a placeholder.
+  const navDeckTitle = useLocation({ select: (location) => (location.state as CardNavState | undefined)?.fromDeckTitle })
   const hydrateDecksFromStorage = useDeckStore((s) => s.hydrateDecksFromStorage)
   const deckLibrary = useDeckStore((s) => s.deckLibrary)
   const adoptDeck = useDeckStore((s) => s.adoptDeck)
@@ -130,11 +139,11 @@ function DeckViewRoute() {
           <Button to="/">
             <span style={{ viewTransitionName: 'library-title' }}>Library</span>
           </Button>
-          {data && (
-            <h1>
-              <span style={{ viewTransitionName: `deck-${id}-title` }}>{data.deck.title || 'Untitled deck'}</span>
-            </h1>
-          )}
+          <h1>
+            <span style={{ viewTransitionName: `deck-${id}-title` }}>
+              {data?.deck.title || navDeckTitle || 'Untitled deck'}
+            </span>
+          </h1>
         </div>
         {data && (
           <div className="library-header-actions">

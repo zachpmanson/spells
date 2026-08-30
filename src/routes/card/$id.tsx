@@ -195,7 +195,11 @@ function CardViewRoute() {
           <span style={{ viewTransitionName: 'library-title' }}>Library</span>
         </Button>
         {fromDeckId && (
-          <Button to="/deck/$id" params={{ id: fromDeckId }}>
+          <Button
+            to="/deck/$id"
+            params={{ id: fromDeckId }}
+            state={({ fromDeckId: fromDeckId, fromDeckTitle: deckBreadcrumbTitle || undefined } satisfies CardNavState) as any}
+          >
             <span style={{ viewTransitionName: `deck-${fromDeckId}-title` }}>
               {deckBreadcrumbTitle || 'Untitled deck'}
             </span>
