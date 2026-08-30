@@ -18,6 +18,7 @@ import type { Card } from '../../types/card'
 // view-transition-name matching whichever element it actually navigated from.
 export interface CardNavState {
   fromDeckId?: string
+  fromDeckTitle?: string
 }
 
 export const Route = createFileRoute('/card/$id')({
@@ -64,14 +65,20 @@ function CardViewRoute() {
   const { id } = Route.useParams()
   const card = Route.useLoaderData()
   const navigate = useNavigate()
-  const fromDeckId = useLocation({ select: (location) => (location.state as CardNavState).fromDeckId })
+  const deckLibrary = useDeckStore((s) => s.deckLibrary)
+  const navState = useLocation({ select: (location) => location.state as CardNavState | undefined })
+  const fromDeckId = navState?.fromDeckId
+  // Deck title for the breadcrumb: prefer the one carried through nav state
+  // (synchronous on first render, so the view-transition morph isn't starved
+  // by deck-store hydration); fall back to the local deck library.
+  const deckBreadcrumbTitle =
+    navState?.fromDeckTitle ?? (fromDeckId ? deckLibrary.find((d) => d.publicId === fromDeckId)?.title : undefined)
   const transitionName = fromDeckId ? `deck-${fromDeckId}-card-${id}` : `card-${id}`
   const hydrateFromStorage = useCardStore((s) => s.hydrateFromStorage)
   const loadCard = useCardStore((s) => s.loadCard)
   const saveToLibrary = useCardStore((s) => s.saveToLibrary)
   const importCards = useCardStore((s) => s.importCards)
   const library = useCardStore((s) => s.library)
-  const deckLibrary = useDeckStore((s) => s.deckLibrary)
   const hydrateDecksFromStorage = useDeckStore((s) => s.hydrateDecksFromStorage)
   const previewRef = useRef<HTMLDivElement>(null)
   const [hydrated, setHydrated] = useState(false)
@@ -187,6 +194,13 @@ function CardViewRoute() {
         <Button to="/">
           <span style={{ viewTransitionName: 'library-title' }}>Library</span>
         </Button>
+        {fromDeckId && (
+          <Button to="/deck/$id" params={{ id: fromDeckId }}>
+            <span style={{ viewTransitionName: `deck-${fromDeckId}-title` }}>
+              {deckBreadcrumbTitle || 'Untitled deck'}
+            </span>
+          </Button>
+        )}
         {card && (
           <>
             <span className="card-view-title">{card.title || 'Untitled'}</span>

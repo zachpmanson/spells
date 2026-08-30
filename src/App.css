@@ -444,16 +444,32 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   padding: 0.75rem 1rem;
   background: #1c1c1c;
   border-bottom: 1px solid #333;
 }
 
+/* Breadcrumb trail: ancestor pages as buttons on the left, the current
+   page's title immediately after. The title is left-aligned so its text
+   lands exactly where its breadcrumb-button form sits on descendant pages,
+   letting the shared view-transition-name morph title into button cleanly. */
+.library-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
 .library-header h1 {
-  margin: 0 0.75rem;
+  margin: 0 0 0 0.75rem;
   font-size: 1.1rem;
   font-weight: 600;
   color: #eee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .library-content {
@@ -479,7 +495,7 @@ body {
   font-size: 1.1rem;
   font-weight: 600;
   color: #eee;
-  margin-left: 0.5rem;
+  margin-left: 0.75rem;
 }
 
 .card-view-actions {
@@ -622,6 +638,7 @@ body {
   border-radius: 4px;
   padding: 0.3rem 0.5rem;
   font-family: inherit;
+  min-width: 0;
 }
 
 .add-to-deck-select {

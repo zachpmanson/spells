@@ -6,6 +6,7 @@ import { useDeckStore } from '../../../lib/deckStore'
 import { getDeckForEdit } from '../../../server/getDeckForEdit'
 import { removeCardFromDeck } from '../../../server/removeCardFromDeck'
 import type { SavedCard } from '../../../server/cardsDb'
+import type { CardNavState } from '../../card/$id'
 import EditAccessError from '../../../components/EditAccessError'
 
 export const Route = createFileRoute('/deck/edit/$id')({
@@ -56,26 +57,29 @@ function DeckEditRoute() {
   return (
     <div className="library-page">
       <div className="library-header">
-        <Button to="/">
-          <span style={{ viewTransitionName: 'library-title' }}>Library</span>
-        </Button>
-        {data && (
-          <>
+        <div className="library-header-left">
+          <Button to="/">
+            <span style={{ viewTransitionName: 'library-title' }}>Library</span>
+          </Button>
+          {data && (
             <input
               className="deck-title-input"
+              style={{ viewTransitionName: `deck-${data.deck.publicId}-title` }}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               aria-label="Deck name"
             />
-            <div className="library-header-actions">
-              <Button onClick={handleSaveTitle} disabled={savingTitle || !title || title === savedTitle}>
-                Save
-              </Button>
-              <Button to="/deck/$id" params={{ id: data.deck.publicId }}>
-                View
-              </Button>
-            </div>
-          </>
+          )}
+        </div>
+        {data && (
+          <div className="library-header-actions">
+            <Button onClick={handleSaveTitle} disabled={savingTitle || !title || title === savedTitle}>
+              Save
+            </Button>
+            <Button to="/deck/$id" params={{ id: data.deck.publicId }}>
+              View
+            </Button>
+          </div>
         )}
       </div>
       <div className="library-content">
@@ -90,6 +94,12 @@ function DeckEditRoute() {
                 <Link
                   to="/card/$id"
                   params={{ id: card.publicId }}
+                  state={
+                    ({
+                      fromDeckId: data.deck.publicId,
+                      fromDeckTitle: data.deck.title || undefined,
+                    } satisfies CardNavState) as any
+                  }
                   className="library-grid-item-preview"
                   title={`View ${card.title || 'Untitled'}`}
                 >

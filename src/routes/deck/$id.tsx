@@ -126,10 +126,16 @@ function DeckViewRoute() {
   return (
     <div className="library-page">
       <div className="library-header">
-        <Button to="/">
-          <span style={{ viewTransitionName: 'library-title' }}>Library</span>
-        </Button>
-        {data && <h1>{data.deck.title || 'Untitled deck'}</h1>}
+        <div className="library-header-left">
+          <Button to="/">
+            <span style={{ viewTransitionName: 'library-title' }}>Library</span>
+          </Button>
+          {data && (
+            <h1>
+              <span style={{ viewTransitionName: `deck-${id}-title` }}>{data.deck.title || 'Untitled deck'}</span>
+            </h1>
+          )}
+        </div>
         {data && (
           <div className="library-header-actions">
             {ownedDeck && (
@@ -161,7 +167,9 @@ function DeckViewRoute() {
                   // Cast needed: HistoryState isn't augmented with our custom field (that
                   // needs @tanstack/history as a direct dependency, bumping the Nix-pinned
                   // pnpm lockfile hash). `satisfies` still checks the literal's shape.
-                  state={({ fromDeckId: id } satisfies CardNavState) as any}
+                  state={
+                    ({ fromDeckId: id, fromDeckTitle: data.deck.title || undefined } satisfies CardNavState) as any
+                  }
                   className="library-grid-item-preview"
                   title={`View ${card.title || 'Untitled'}`}
                 >

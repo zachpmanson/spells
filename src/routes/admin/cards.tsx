@@ -28,10 +28,12 @@ function AdminCardsRoute() {
   return (
     <div className="library-page">
       <div className="library-header">
-        <Button to="/">
-          <span style={{ viewTransitionName: 'library-title' }}>Library</span>
-        </Button>
-        <h1>All cards ({total})</h1>
+        <div className="library-header-left">
+          <Button to="/">
+            <span style={{ viewTransitionName: 'library-title' }}>Library</span>
+          </Button>
+          <h1>All cards ({total})</h1>
+        </div>
       </div>
       <div className="library-content">
         {cards.length === 0 ? (
